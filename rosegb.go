@@ -48,7 +48,7 @@ func checkBIOS() bool {
 }
 
 func (cpu *CPU) skipBootROM() {
-	cpu.A = 0x10
+	cpu.A = 0x01
 	cpu.B = 0x00
 	cpu.C = 0x13
 	cpu.D = 0x00
@@ -57,6 +57,7 @@ func (cpu *CPU) skipBootROM() {
 	cpu.H = 0x01
 	cpu.L = 0x4D
 	cpu.SP = 0xFFFE
+	cpu.PC = 0x100
 	cpu.bus.write(0xFF05, 0x00)
 	cpu.bus.write(0xFF06, 0x00)
   	cpu.bus.write(0xFF07, 0x00)

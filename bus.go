@@ -33,6 +33,21 @@ func (bus *Bus) read(addr uint16) byte {
 	}
 }
 
+func (bus *Bus) read16(addr uint16) uint16 {
+	switch {
+		case addr >= 0x0000 && addr <= 0x7FFF:
+			return uint16(bus.cartridge.ROM[addr + 1]) << 8 | uint16(bus.cartridge.ROM[addr])
+		case addr >= 0x8000 && addr <= 0x9FFF:
+			return uint16(bus.ppu.VRAM[addr + 1 - 0x8000]) << 8 | uint16(bus.ppu.VRAM[addr - 0x8000])
+		case addr >= 0xA000 && addr <= 0xBFFF:
+			return uint16(bus.cartridge.ERAM[addr + 1 - 0xA000]) << 8 | uint16(bus.cartridge.ERAM[addr - 0xA000])
+		case addr >= 0xC000 && addr <= 0xDFFF:
+			return uint16(bus.WRAM[addr + 1 - 0xC000]) << 8 | uint16(bus.WRAM[addr - 0xC000])
+		default:
+			return 0
+	}
+}
+
 func (bus *Bus) write(addr uint16, data byte) {
 	switch {
 		case addr >= 0x8000 && addr <= 0x9FFF:

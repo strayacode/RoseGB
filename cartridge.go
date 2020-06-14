@@ -71,13 +71,5 @@ func (cartridge *Cartridge) loadCartridge() {
 	for i := 0; i < 0x7FFF; i++ {
 		cartridge.ROM[i] = file[i]
 	}
-
-	for i := 0; i < 500; i++ {
-		fmt.Println(cartridge.ROM[i])
-	}
-
-
-	
-	
 }
 
