@@ -6,6 +6,6 @@ type PPU struct {
 	OAM [0xA0]byte
 	LCDC byte
 	LCDCSTAT byte
-	SCROLLX byte
-	SCROLLY byte
+	SCX byte
+	SCY byte
 }

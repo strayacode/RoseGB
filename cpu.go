@@ -1,5 +1,9 @@
 package main
 
+import (
+	"fmt"
+)
+
 type CPU struct {
 	A byte
 	B byte
@@ -14,11 +18,15 @@ type CPU struct {
 	Cycles int
 	Opcode byte
 	bus Bus
+	biosSkip bool
+	IME byte
 }
 
 func (cpu *CPU) tick() {
 	if cpu.Cycles == 0 {
-		cpu.debug()
+		// cpu.debugCPU()
+		// cpu.debugPPU()
+		fmt.Println(cpu.PC)
 		cpu.Opcode = cpu.bus.read(cpu.PC)
 		cpu.PC++
 		cpu.Cycles = opcodes[cpu.Opcode].Cycles

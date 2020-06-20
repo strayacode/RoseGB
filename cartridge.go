@@ -63,10 +63,10 @@ func (cartridge *Cartridge) loadCartridge() {
 	cartridge.header.ROMSize = file[0x148]
 	cartridge.header.RAMSize = file[0x149]
 	// can only support ROM cartridge right now
-	if cartridge.header.cartridgeType != 0 {
-		fmt.Println("unsupported cartridge type!", cartridge.header.cartridgeType)
-		os.Exit(3)
-	}
+	// if cartridge.header.cartridgeType != 0 || cartridge.header.cartridgeType != 1 { // ignore test roms for now
+	// 	fmt.Println("unsupported cartridge type!", cartridge.header.cartridgeType)
+	// 	os.Exit(3)
+	// }
 
 	for i := 0; i < 0x7FFF; i++ {
 		cartridge.ROM[i] = file[i]

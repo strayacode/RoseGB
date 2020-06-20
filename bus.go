@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"os"
 )
 
 type Bus struct {
 	cartridge Cartridge
 	WRAM [0x2000]byte
 	ppu PPU
-	IOReg [0x80]byte
 	HRAM [0x80]byte
 	IE byte
 }
@@ -25,7 +25,7 @@ func (bus *Bus) read(addr uint16) byte {
 		case addr >= 0xC000 && addr <= 0xDFFF:
 			return bus.WRAM[addr - 0xC000]
 		case addr >= 0xFF00 && addr <= 0xFF7F:
-			return bus.IOReg[addr - 0xFF00]
+			return bus.readIO(addr)
 		case addr >= 0xFF80 && addr <= 0xFFFE:
 			return bus.HRAM[addr - 0xFF80]
 		default:
@@ -57,10 +57,42 @@ func (bus *Bus) write(addr uint16, data byte) {
 		case addr >= 0xC000 && addr <= 0xDFFF:
 			bus.WRAM[addr - 0xC000] = data
 		case addr >= 0xFF00 && addr <= 0xFF7F:
-			bus.IOReg[addr - 0xFF00] = data
+			bus.writeIO(addr, data)
+		case addr >= 0xFF80 && addr <= 0xFFFE:
+			bus.HRAM[addr - 0xFF80] = data
 		case addr == 0xFFFF:
 			bus.IE = data
 		default:
 			fmt.Println("DEBUG: non-writeable memory location!", addr)
+			os.Exit(3)
 	}
+}
+
+func (bus *Bus) readIO(addr uint16) byte {
+	switch addr {
+		case 0xFF40:
+			return bus.ppu.LCDC
+		case 0xFF42:
+			return bus.ppu.SCY
+		case 0xFF43:
+			return bus.ppu.SCX
+		default:
+			fmt.Println(addr, "not implemented yet!")
+			os.Exit(3)
+			return 0
+	}
+}
+
+func (bus *Bus) writeIO(addr uint16, data byte) byte {
+	switch addr {
+		case 0xFF40:
+			bus.ppu.LCDC = data
+		case 0xFF42:
+			bus.ppu.SCY = data
+		case 0xFF43:
+			bus.ppu.SCX = data
+		default:
+			return 0
+	}
+	return 0
 }
