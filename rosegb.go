@@ -29,13 +29,9 @@ func main() {
 	for !rl.WindowShouldClose() {
 		for i := 0; i < 70224; i++ {
 			cpu.tick()
+			// cpu.bus.ppu.tick()
 		}
-		// rl.BeginDrawing()
-		// rl.ClearBackground(rl.RayWhite)
-		// rl.DrawRectangle(1, 1, 1, 1, rl.Red)
-		
-
-		// rl.EndDrawing()
+		cpu.drawFramebuffer() // draw framebuffer once per frame
 	}
 
 	rl.CloseWindow()
@@ -90,4 +86,26 @@ func (cpu *CPU) skipBootROM() {
   	cpu.bus.write(0xFF4B, 0x00)
   	cpu.bus.write(0xFFFF, 0x00)
   	cpu.bus.cartridge.loadCartridge()
+}
+
+type Colour struct {
+	R byte
+	G byte
+	B byte
+}
+
+func (cpu *CPU) drawFramebuffer() {
+	// var colours [4]Colour = [4]Colour{
+	// 	Colour{255, 255, 255}, Colour{192, 192, 192}, Colour{96, 96, 96}, Colour{0, 0, 0},
+	// } 
+	rl.BeginDrawing()
+
+	rl.ClearBackground(rl.RayWhite)
+	for i := 0; i < 144; i++ {
+		for j := 0; j < 160; j++ {
+			rl.DrawRectangle(int32(j), int32(i), 1, 1, rl.Red)
+		}
+	}
+	
+	rl.EndDrawing()
 }

@@ -25,8 +25,9 @@ func (cpu *CPU) debugPPU() {
 
 func (cpu *CPU) setPCBreakpoint(PC uint16) {
 	if cpu.PC == PC {
-		cpu.debugCPU()
-		cpu.debugPPU()
+		// cpu.debugCPU()
+		// cpu.debugPPU()
+		cpu.bus.ppu.drawFramebuffer()
 		os.Exit(3)
 	}
 

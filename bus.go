@@ -9,6 +9,7 @@ type Bus struct {
 	cartridge Cartridge
 	WRAM [0x2000]byte
 	ppu PPU
+	apu APU
 	HRAM [0x80]byte
 	IE byte
 }
@@ -91,6 +92,16 @@ func (bus *Bus) readIO(addr uint16) byte {
 
 func (bus *Bus) writeIO(addr uint16, data byte) byte {
 	switch addr {
+		case 0xFF11:
+			bus.apu.NR11 = data
+		case 0xFF12:
+			bus.apu.NR12 = data
+		case 0xFF24:
+			bus.apu.NR50 = data
+		case 0xFF25:
+			bus.apu.NR51 = data
+		case 0xFF26:
+			bus.apu.NR52 = data
 		case 0xFF40:
 			bus.ppu.LCDC = data
 		case 0xFF42:
@@ -101,10 +112,13 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 			bus.ppu.LY = data
 		case 0xFF45:
 			bus.ppu.LYC = data
+		case 0xFF47:
+			bus.ppu.BGP = data
 		case 0xFF50:
 			bus.cartridge.unmapBootROM()
 		default:
-			fmt.Println("IO reg not handled!")
+			fmt.Println("IO reg not handled!", addr)
+			os.Exit(3)
 			return 0
 	}
 	return 0
