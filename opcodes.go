@@ -208,9 +208,6 @@ func op_0x20(cpu *CPU) {
 		cpu.Cycles += 4
 	} else {
 		cpu.PC++
-		fmt.Println("good")
-		cpu.debugCPU()
-		os.Exit(3)
 	}
 
 }

@@ -43,6 +43,8 @@ func (bus *Bus) read16(addr uint16) uint16 {
 			return uint16(bus.cartridge.ERAM[addr + 1 - 0xA000]) << 8 | uint16(bus.cartridge.ERAM[addr - 0xA000])
 		case addr >= 0xC000 && addr <= 0xDFFF:
 			return uint16(bus.WRAM[addr + 1 - 0xC000]) << 8 | uint16(bus.WRAM[addr - 0xC000])
+		case addr >= 0xFF80 && addr <= 0xFFFE:
+			return uint16(bus.HRAM[addr + 1 - 0xFF80]) << 8 | uint16(bus.HRAM[addr - 0xFF80])
 		default:
 			return 0
 	}
@@ -76,6 +78,10 @@ func (bus *Bus) readIO(addr uint16) byte {
 			return bus.ppu.SCY
 		case 0xFF43:
 			return bus.ppu.SCX
+		case 0xFF44:
+			return bus.ppu.LY
+		case 0xFF45:
+			return bus.ppu.LYC
 		default:
 			fmt.Println(addr, "not implemented yet!")
 			os.Exit(3)
@@ -91,7 +97,14 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 			bus.ppu.SCY = data
 		case 0xFF43:
 			bus.ppu.SCX = data
+		case 0xFF44:
+			bus.ppu.LY = data
+		case 0xFF45:
+			bus.ppu.LYC = data
+		case 0xFF50:
+			bus.cartridge.unmapBootROM()
 		default:
+			fmt.Println("IO reg not handled!")
 			return 0
 	}
 	return 0

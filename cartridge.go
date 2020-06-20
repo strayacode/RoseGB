@@ -24,6 +24,7 @@ type Header struct {
 }
 
 func (cartridge *Cartridge) loadBootROM() {
+	cartridge.loadCartridge()
 	_, err := os.Stat("bios.rom")
 	if os.IsNotExist(err) {
 		fmt.Println("no bios file detected!")
@@ -71,5 +72,21 @@ func (cartridge *Cartridge) loadCartridge() {
 	for i := 0; i < 0x7FFF; i++ {
 		cartridge.ROM[i] = file[i]
 	}
+}
+
+func (cartridge *Cartridge) unmapBootROM() {
+	rom := flag.Args()[0]
+	file, err := ioutil.ReadFile(rom)
+	if err != nil {
+		fmt.Println(err)
+	}
+	for i := 0; i < 0xFF; i++ {
+		cartridge.ROM[i] = file[i]
+	}
+
+	for i := 0; i < 0x200; i++ {
+		fmt.Println(cartridge.ROM[i])
+	}
+
 }
 

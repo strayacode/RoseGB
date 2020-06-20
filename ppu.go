@@ -8,4 +8,20 @@ type PPU struct {
 	LCDCSTAT byte
 	SCX byte
 	SCY byte
+	LY byte
+	LYC byte
+	// Cycles int
 }
+
+func (ppu *PPU) tick() {
+	// if ppu.Cycles == 0 {
+	// 	switch LCDCSTAT & 0x03:
+	// 		case 0:
+	// 			// HBlank
+	// 			ppu.Cycles = 204
+	// 		case 1:
+	// 			// VBlank
+	// 			cpu.
+	// }
+}
+
