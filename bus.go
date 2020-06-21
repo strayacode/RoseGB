@@ -96,6 +96,10 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 			bus.apu.NR11 = data
 		case 0xFF12:
 			bus.apu.NR12 = data
+		case 0xFF13:
+			bus.apu.NR13 = data
+		case 0xFF14:
+			bus.apu.NR14 = data
 		case 0xFF24:
 			bus.apu.NR50 = data
 		case 0xFF25:

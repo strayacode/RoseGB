@@ -15,19 +15,21 @@ func (cpu *CPU) debugCPU() {
 }
 
 func (cpu *CPU) debugPPU() {
-	fmt.Println("LCDC: ", cpu.bus.ppu.LCDC)
+	
 	if cpu.bus.ppu.LCDC & 0x10 == 1 {
 		cpu.debugVRAM(0x8000, 0x8FFF)
 	} else {
 		cpu.debugVRAM(0x8800, 0x97FF)
 	}
+	fmt.Println("LCDC: ", cpu.bus.ppu.LCDC)
+	fmt.Println("LCDCSTAT", cpu.bus.ppu.LCDCSTAT)
 }
 
 func (cpu *CPU) setPCBreakpoint(PC uint16) {
 	if cpu.PC == PC {
-		// cpu.debugCPU()
+		cpu.debugCPU()
 		// cpu.debugPPU()
-		cpu.bus.ppu.drawFramebuffer()
+		// cpu.bus.ppu.drawFramebuffer()
 		os.Exit(3)
 	}
 

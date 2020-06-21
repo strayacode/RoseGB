@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	// "strconv"
 )
 
@@ -13,52 +13,105 @@ type PPU struct {
 	LCDCSTAT byte
 	SCX byte
 	SCY byte
-	LY byte
+	LY byte // keep track of the current line in the frame and index part of tile correctly
 	LYC byte
+	LX byte
 	Cycles int
-	Index int
-	VRAMIndex uint16
 	BGP byte
 }
 
 func (ppu *PPU) tick() {
+	ppu.Cycles++
 	
-	// if ppu.Cycles == 0 {
-	// 	switch LCDCSTAT & 0x03:
-	// 		case 0:
-	// 			// HBlank
-	// 			ppu.Cycles = 204
-	// 		case 1:
-	// 			// VBlank
-	// 			cpu.
-	// }
+	switch ppu.LCDCSTAT & 0x03 {
+		case 0:
+			// HBlank
+			if ppu.Cycles >= 204 {
+				ppu.Cycles = 0
+				ppu.drawScanLine()
+				ppu.LY++
+				ppu.LX = 0
+				
+				
+				if ppu.LY == 144 {
+					ppu.LCDCSTAT |= 0x01
+					
+				}
+			}
+		case 1:
+			// VBlank
+			if ppu.Cycles >= 456 {
+				ppu.Cycles = 0
+				ppu.LY++
+				
+			} // implement as correct interrupt later
+			if ppu.LY >= 153 {
+				ppu.LCDCSTAT |= 0x10
+				ppu.LY = 0
+				// ppu.LX = 0
+				
+			}
+		case 2: 
+			// search OAM still got to implement
+			if ppu.Cycles >= 80 {
+				ppu.Cycles = 0
+				ppu.LCDCSTAT |= 0x11
+			}
+		case 3:
+			// read scanline from VRAM and put in framebuffer
+			if ppu.Cycles >= 172 {
+				// draw scanline
+				ppu.LCDCSTAT |= 0x00
+				ppu.Cycles = 0
+
+			}
+	}
 }
 
-func (ppu *PPU) drawFramebuffer() {
-	for i := ppu.getBGMapAddr(); i < ppu.getBGMapAddr() + 1024; i++ {
-		// string := ""
-		for j := 0; j < 16; j++ {
-			index := ppu.VRAM[ppu.getBGMapAddr() - 0x8000]
-			fmt.Println(index)
-			// if index > 0 {
 
 
-				// fmt.Println(uint16(j) + uint16((index * 16)), index)
-			// }
-			// fmt.Println(uint16(j) + ppu.getBGStartAddr() - 0x8000 + (ppu.getBGStartAddr() - 0x8000 + uint16(index * 16) + uint16(j)) * 16)
-			
-			// string += strconv.FormatUint(uint64(ppu.VRAM[ppu.getBGStartAddr() - 0x8000 + uint16(index * 16) + uint16(j)]), 16)
+// trying to draw line by line
+func (ppu *PPU) drawScanLine() {
+	
+	// strategy: get starting bg map address
+	// using SCX and SCY find the tile to start on and iterate over the 360 tiles
+	startAddr := ppu.getBGMapAddr() + uint16((ppu.SCY + ppu.LY) * 32) + uint16(ppu.SCX)
+	for i := 0; i < 20; i++ {
+		if ppu.VRAM[startAddr + uint16(i) - 0x8000] > 0 {
+
+
+			// fmt.Println(ppu.VRAM[startAddr + uint16(i) - 0x8000])
 		}
-		// fmt.Println(string)
+		// ppu.drawBGLine()
 	}
-	// ppu.getBGStartAddr()
+
+	// for i := 0; i < 8; i++ {
+	// 	ppu.frameBuffer[ppu.yIndex][ppu.xIndex] = (((1 << i) & left) >> i | ((1 << i) & right) >> i)
+		
+		
+
+		
+	// }
+	
+
 }
+// take 2 bytes and add to framebuffer
+func (ppu *PPU) drawBGLine(left byte, ) {
+	
+	
+	
 
-// WARNING: THIS IS THE VERY FIRST PPU IMPLEMENTATION FOR DRAWING: ONLY TO DRAW TILES TO SCREEN
-func (ppu *PPU) drawTile(j int) {
 	for i := 0; i < 8; i++ {
+		
+		
+		// ppu.frameBuffer[ppu.yIndex][ppu.xIndex] = (((1 << i) & left) >> i | ((1 << i) & right) >> i)
+		
+		
 
+		
 	}
+	
+
 }
 
 func (ppu *PPU) getBGStartAddr() uint16 {

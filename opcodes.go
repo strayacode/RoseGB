@@ -13,11 +13,13 @@ type Opcode struct {
 
 func op_null(cpu *CPU) {
 	fmt.Println("unimplemented opcode!", "0x" + strconv.FormatUint(uint64(cpu.Opcode), 16))
+	cpu.debugCPU()
 	os.Exit(3)
 }
 
 func cbop_null(cpu *CPU) {
 	fmt.Println("unimplemented cb opcode!", "0x" + strconv.FormatUint(uint64(cpu.Opcode), 16))
+	cpu.debugCPU()
 	os.Exit(3)
 }
 
@@ -340,6 +342,11 @@ func op_0x77(cpu *CPU) {
 	cpu.bus.write((uint16(cpu.H) << 8 | uint16(cpu.L)), cpu.A)
 }
 
+// LD A, B DONE
+func op_0x78(cpu *CPU) {
+	cpu.A = cpu.B
+}
+
 // LD A, E DONE
 func op_0x7B(cpu *CPU) {
 	cpu.A = cpu.E
@@ -353,6 +360,23 @@ func op_0x7C(cpu *CPU) {
 // LD A, L DONE
 func op_0x7D(cpu *CPU) {
 	cpu.A = cpu.L
+}
+
+// ADD A, (HL)
+func op_0x86(cpu *CPU) {
+	cpu.A += cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	if ((cpu.A - cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))) & 0x08) != (cpu.A & 0x08) {
+		cpu.HFlag(1)
+	}
+	if cpu.A & 0x80 != (cpu.A - cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))) & 0x80 {
+		cpu.CFlag(1)
+	}
 }
 
 // SUB A, B DONE
@@ -385,6 +409,23 @@ func op_0xAF(cpu *CPU) {
 	cpu.HFlag(0)
 	cpu.CFlag(0)
 
+}
+
+// CP A, (HL) DONE
+func op_0xBE(cpu *CPU) {
+	result := cpu.A - cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	if result == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(1)
+	if ((cpu.A + cpu.bus.read(cpu.PC)) & 0x10) != (result & 0x10) {
+		cpu.HFlag(1)
+	}
+	if (result < 0) {
+		cpu.CFlag(1)
+	}
 }
 
 // POP BC DONE
@@ -514,11 +555,11 @@ var opcodes [256]Opcode = [256]Opcode {
 	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x47}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x4F},
 	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x57}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
 	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x67}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{8, op_0x77}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_0x7B}, Opcode{4, op_0x7C}, Opcode{4, op_0x7D}, Opcode{8, op_null}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
+	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{8, op_0x77}, Opcode{4, op_0x78}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_0x7B}, Opcode{4, op_0x7C}, Opcode{4, op_0x7D}, Opcode{8, op_null}, Opcode{4, op_null},
+	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0x86}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
 	Opcode{4, op_0x90}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
 	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0xAF},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
+	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0xBE}, Opcode{4, op_null},
 	Opcode{4, op_null}, Opcode{12, op_0xC1}, Opcode{8, op_null}, Opcode{16, op_0xC3}, Opcode{4, op_null}, Opcode{16, op_0xC5}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{16, op_0xC9}, Opcode{8, op_null}, Opcode{4, op_0xCB}, Opcode{4, op_null}, Opcode{24, op_0xCD}, Opcode{8, op_null}, Opcode{4, op_null},
 	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
 	Opcode{12, op_0xE0}, Opcode{12, op_null}, Opcode{8, op_0xE2}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{16, op_0xEA}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},

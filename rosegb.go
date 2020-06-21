@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gen2brain/raylib-go/raylib"
 	"flag"
+	// "fmt"
 )
 
 func main() {
@@ -29,9 +30,10 @@ func main() {
 	for !rl.WindowShouldClose() {
 		for i := 0; i < 70224; i++ {
 			cpu.tick()
-			// cpu.bus.ppu.tick()
+			cpu.bus.ppu.tick()
 		}
-		cpu.drawFramebuffer() // draw framebuffer once per frame
+		// cpu.bus.ppu.drawFramebuffer()
+		// cpu.drawFramebuffer() // draw framebuffer once per frame
 	}
 
 	rl.CloseWindow()
@@ -92,18 +94,21 @@ type Colour struct {
 	R byte
 	G byte
 	B byte
+	A byte
 }
 
 func (cpu *CPU) drawFramebuffer() {
-	// var colours [4]Colour = [4]Colour{
-	// 	Colour{255, 255, 255}, Colour{192, 192, 192}, Colour{96, 96, 96}, Colour{0, 0, 0},
-	// } 
+	var colours [4]Colour = [4]Colour{
+		Colour{255, 255, 255, 255}, Colour{192, 192, 192, 255}, Colour{96, 96, 96, 255}, Colour{0, 0, 0, 255},
+	} 
 	rl.BeginDrawing()
 
 	rl.ClearBackground(rl.RayWhite)
 	for i := 0; i < 144; i++ {
 		for j := 0; j < 160; j++ {
-			rl.DrawRectangle(int32(j), int32(i), 1, 1, rl.Red)
+			tileColour := colours[cpu.bus.ppu.frameBuffer[i][j]]
+			// fmt.Println
+			rl.DrawRectangle(int32(j), int32(i), 1, 1, rl.NewColor(tileColour.R, tileColour.G, tileColour.B, 255))
 		}
 	}
 	
