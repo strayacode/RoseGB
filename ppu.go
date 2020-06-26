@@ -2,7 +2,7 @@ package main
 
 import (
 	// "fmt"
-	// "strconv"
+	"math"
 )
 
 type PPU struct {
@@ -22,46 +22,57 @@ type PPU struct {
 
 func (ppu *PPU) tick() {
 	ppu.Cycles++
-	
+	// fmt.Println(ppu.LCDCSTAT & 0x03)
 	switch ppu.LCDCSTAT & 0x03 {
 		case 0:
 			// HBlank
 			if ppu.Cycles >= 204 {
 				ppu.Cycles = 0
+				ppu.LX = 0
 				ppu.drawScanLine()
 				ppu.LY++
-				ppu.LX = 0
 				
+				// fmt.Println(ppu.LCDCSTAT & 0x03)
 				
 				if ppu.LY == 144 {
+					// execute VBlank
 					ppu.LCDCSTAT |= 0x01
+					ppu.LCDCSTAT &= 0xFD
+				} else {
+					// execute OAM search
+					
+					ppu.LCDCSTAT |= 0x02
+					ppu.LCDCSTAT &= 0xFE
 					
 				}
 			}
 		case 1:
 			// VBlank
-			if ppu.Cycles >= 456 {
+			if ppu.Cycles >= 4560 {
+				// fmt.Println(ppu.LCDCSTAT & 0x03)
+				// ppu.clearFramebuffer()
 				ppu.Cycles = 0
-				ppu.LY++
+
+				ppu.LY = 0
+				ppu.LX = 0
+				ppu.LCDCSTAT &= 0xFE
 				
 			} // implement as correct interrupt later
-			if ppu.LY >= 153 {
-				ppu.LCDCSTAT |= 0x10
-				ppu.LY = 0
-				// ppu.LX = 0
-				
-			}
 		case 2: 
 			// search OAM still got to implement
+			// fmt.Println(ppu.LCDCSTAT & 0x03)
 			if ppu.Cycles >= 80 {
+				
 				ppu.Cycles = 0
-				ppu.LCDCSTAT |= 0x11
+				ppu.LCDCSTAT |= 0x03
 			}
 		case 3:
 			// read scanline from VRAM and put in framebuffer
+
 			if ppu.Cycles >= 172 {
+				
 				// draw scanline
-				ppu.LCDCSTAT |= 0x00
+				ppu.LCDCSTAT &= 0xFC
 				ppu.Cycles = 0
 
 			}
@@ -73,42 +84,33 @@ func (ppu *PPU) tick() {
 // trying to draw line by line
 func (ppu *PPU) drawScanLine() {
 	
-	// strategy: get starting bg map address
-	// using SCX and SCY find the tile to start on and iterate over the 360 tiles
-	startAddr := ppu.getBGMapAddr() + uint16((ppu.SCY + ppu.LY) * 32) + uint16(ppu.SCX)
-	for i := 0; i < 20; i++ {
-		if ppu.VRAM[startAddr + uint16(i) - 0x8000] > 0 {
-
-
-			// fmt.Println(ppu.VRAM[startAddr + uint16(i) - 0x8000])
-		}
-		// ppu.drawBGLine()
-	}
-
-	// for i := 0; i < 8; i++ {
-	// 	ppu.frameBuffer[ppu.yIndex][ppu.xIndex] = (((1 << i) & left) >> i | ((1 << i) & right) >> i)
-		
-		
-
-		
-	// }
 	
+	tileY := math.Floor(float64(int(ppu.LY) + int(ppu.SCY)) / 8)
+	tileX := math.Floor(float64(int(ppu.SCX) + int(ppu.LX) / 8))
+	
+	startAddr := ppu.getBGMapAddr() + uint16(tileY * 32) + uint16(tileX)
+	// iterate through tiles in a scanline
+	for i := 0; i < 20; i++ {
+		start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000])) - 0x8000
+		tileIndex := uint16(math.Floor((float64(ppu.SCY % 8)) / 2)) 
+		// fmt.Println(start, tileIndex)
+		ppu.drawBGLine(ppu.VRAM[start + (2 * tileIndex)], ppu.VRAM[start + (2 * tileIndex) + 1])
+		
+		
 
+		
+		
+	}
 }
 // take 2 bytes and add to framebuffer
-func (ppu *PPU) drawBGLine(left byte, ) {
+func (ppu *PPU) drawBGLine(left byte, right byte) {
 	
-	
+	// fmt.Println(left, right)
 	
 
 	for i := 0; i < 8; i++ {
-		
-		
-		// ppu.frameBuffer[ppu.yIndex][ppu.xIndex] = (((1 << i) & left) >> i | ((1 << i) & right) >> i)
-		
-		
-
-		
+		ppu.frameBuffer[ppu.LY][ppu.LX] = (((1 << i) & left) >> i | ((1 << i) & right) >> i)
+		ppu.LX++
 	}
 	
 
@@ -128,3 +130,10 @@ func (ppu *PPU) getBGMapAddr() uint16 {
 	return 0x9800
 }
 
+func (ppu *PPU) clearFramebuffer() {
+	for i := 0; i < 160; i++ {
+		for j := 0; j < 144; j++ {
+			ppu.frameBuffer[j][i] = 0
+		}
+	}
+}

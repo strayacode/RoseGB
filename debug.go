@@ -16,11 +16,11 @@ func (cpu *CPU) debugCPU() {
 
 func (cpu *CPU) debugPPU() {
 	
-	if cpu.bus.ppu.LCDC & 0x10 == 1 {
-		cpu.debugVRAM(0x8000, 0x8FFF)
-	} else {
-		cpu.debugVRAM(0x8800, 0x97FF)
-	}
+	// if cpu.bus.ppu.LCDC & 0x10 == 1 {
+	// 	cpu.debugVRAM(0x8000, 0x8FFF)
+	// } else {
+	// 	cpu.debugVRAM(0x8800, 0x97FF)
+	// }
 	fmt.Println("LCDC: ", cpu.bus.ppu.LCDC)
 	fmt.Println("LCDCSTAT", cpu.bus.ppu.LCDCSTAT)
 }
@@ -35,7 +35,7 @@ func (cpu *CPU) setPCBreakpoint(PC uint16) {
 
 }
 
-func (cpu *CPU) debugVRAM(start uint16, end uint16) {
+func (cpu *CPU) debugVRAM() {
 	string := ""
 	for i := 0x8000; i < 0x9FFF; i++ {
 		string += " " + strconv.FormatUint(uint64(cpu.bus.ppu.VRAM[i - 0x8000]), 16)

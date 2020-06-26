@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/gen2brain/raylib-go/raylib"
 	"flag"
-	// "fmt"
 )
 
 func main() {
@@ -28,12 +27,22 @@ func main() {
 
 	// mainloop which is executed 60 times per second
 	for !rl.WindowShouldClose() {
-		for i := 0; i < 70224; i++ {
+
+		for i := 0; i < 17556; i++ {
 			cpu.tick()
 			cpu.bus.ppu.tick()
+
 		}
-		// cpu.bus.ppu.drawFramebuffer()
-		// cpu.drawFramebuffer() // draw framebuffer once per frame
+		// fmt.Println("new frame!")
+		// rl.BeginDrawing()
+
+		// rl.ClearBackground(rl.RayWhite)
+
+		// rl.DrawText("Congrats! You created your first window!", 190, 200, 20, rl.LightGray)
+
+		// rl.EndDrawing()
+		cpu.drawFramebuffer()
+		// cpu.debugVRAM()
 	}
 
 	rl.CloseWindow()
@@ -106,9 +115,28 @@ func (cpu *CPU) drawFramebuffer() {
 	rl.ClearBackground(rl.RayWhite)
 	for i := 0; i < 144; i++ {
 		for j := 0; j < 160; j++ {
-			tileColour := colours[cpu.bus.ppu.frameBuffer[i][j]]
-			// fmt.Println
-			rl.DrawRectangle(int32(j), int32(i), 1, 1, rl.NewColor(tileColour.R, tileColour.G, tileColour.B, 255))
+			// get palette
+			
+			
+			tileColour := cpu.bus.read(0xFF47)
+			if cpu.bus.ppu.frameBuffer[i][j] == 0 {
+				tileColour &= 0x03
+				
+			} else if cpu.bus.ppu.frameBuffer[i][j] == 1 {
+				tileColour = (tileColour & 0xC) >> 2
+				
+			} else if cpu.bus.ppu.frameBuffer[i][j] == 2 {
+				tileColour = (tileColour & 0x30) >> 4
+				
+			} else if cpu.bus.ppu.frameBuffer[i][j] == 3 {
+				tileColour = (tileColour & 0xC0) >> 6
+				
+			}
+
+			
+				
+			
+			rl.DrawRectangle(int32(j), int32(i), 1, 1, rl.NewColor(colours[tileColour].R, colours[tileColour].G, colours[tileColour].B, 255))
 		}
 	}
 	

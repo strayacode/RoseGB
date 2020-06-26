@@ -84,9 +84,7 @@ func (cartridge *Cartridge) unmapBootROM() {
 		cartridge.ROM[i] = file[i]
 	}
 
-	for i := 0; i < 0x200; i++ {
-		fmt.Println(cartridge.ROM[i])
-	}
+	
 
 }
 

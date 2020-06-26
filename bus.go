@@ -12,6 +12,7 @@ type Bus struct {
 	apu APU
 	HRAM [0x80]byte
 	IE byte
+	TAC byte
 }
 
 
@@ -30,6 +31,8 @@ func (bus *Bus) read(addr uint16) byte {
 		case addr >= 0xFF80 && addr <= 0xFFFE:
 			return bus.HRAM[addr - 0xFF80]
 		default:
+			fmt.Println("DEBUG: non-readable memory location!", addr)
+			os.Exit(3)
 			return 0
 	}
 }
@@ -47,6 +50,8 @@ func (bus *Bus) read16(addr uint16) uint16 {
 		case addr >= 0xFF80 && addr <= 0xFFFE:
 			return uint16(bus.HRAM[addr + 1 - 0xFF80]) << 8 | uint16(bus.HRAM[addr - 0xFF80])
 		default:
+			fmt.Println("DEBUG: non-readable memory location!", addr)
+			os.Exit(3)
 			return 0
 	}
 }
@@ -83,8 +88,10 @@ func (bus *Bus) readIO(addr uint16) byte {
 			return bus.ppu.LY
 		case 0xFF45:
 			return bus.ppu.LYC
+		case 0xFF47:
+			return bus.ppu.BGP
 		default:
-			fmt.Println(addr, "not implemented yet!")
+			fmt.Println(addr, "IO read not implemented yet!")
 			os.Exit(3)
 			return 0
 	}
@@ -92,6 +99,8 @@ func (bus *Bus) readIO(addr uint16) byte {
 
 func (bus *Bus) writeIO(addr uint16, data byte) byte {
 	switch addr {
+		case 0xFF07:
+			bus.TAC = data
 		case 0xFF11:
 			bus.apu.NR11 = data
 		case 0xFF12:

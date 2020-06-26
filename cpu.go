@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
+	// "fmt"
+	// "strconv"
 )
 
 type CPU struct {
@@ -28,7 +28,7 @@ func (cpu *CPU) tick() {
 		// cpu.debugCPU()
 		// cpu.setPCBreakpoint(0xE0)
 
-		fmt.Println(strconv.FormatUint(uint64(cpu.PC), 16))
+		// fmt.Println(strconv.FormatUint(uint64(cpu.PC), 16))
 		cpu.Opcode = cpu.bus.read(cpu.PC)
 		cpu.PC++
 		cpu.Cycles = opcodes[cpu.Opcode].Cycles
