@@ -12,6 +12,7 @@ func (cpu *CPU) debugCPU() {
 	fmt.Println("D: ", strconv.FormatUint(uint64(cpu.D), 16), "E: ", strconv.FormatUint(uint64(cpu.E), 16))
 	fmt.Println("H: ", strconv.FormatUint(uint64(cpu.H), 16), "L: ", strconv.FormatUint(uint64(cpu.L), 16))
 	fmt.Println("PC: ", strconv.FormatUint(uint64(cpu.PC), 16), "SP: ", strconv.FormatUint(uint64(cpu.SP), 16))
+	// cpu.debugVRAM()
 }
 
 func (cpu *CPU) debugPPU() {
@@ -28,6 +29,7 @@ func (cpu *CPU) debugPPU() {
 func (cpu *CPU) setPCBreakpoint(PC uint16) {
 	if cpu.PC == PC {
 		cpu.debugCPU()
+		cpu.debugWRAM()
 		// cpu.debugPPU()
 		// cpu.bus.ppu.drawFramebuffer()
 		os.Exit(3)
@@ -41,4 +43,16 @@ func (cpu *CPU) debugVRAM() {
 		string += " " + strconv.FormatUint(uint64(cpu.bus.ppu.VRAM[i - 0x8000]), 16)
 	}
 	fmt.Println(string)
+}
+
+func (cpu *CPU) debugWRAM() {
+	string := ""
+	for i := 0xC000; i < 0xDFFF; i++ {
+		string += " " + strconv.FormatUint(uint64(cpu.bus.WRAM[i - 0xC000]), 16)
+	}
+	fmt.Println(string)
+}
+
+func (cpu *CPU) debugBlargg() {
+	fmt.Println(cpu.bus.SB)
 }

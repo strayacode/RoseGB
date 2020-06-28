@@ -28,6 +28,13 @@ func op_0x00(cpu *CPU) {
 
 }
 
+// LD BC, u16 DONE
+func op_0x01(cpu *CPU) {
+	cpu.B = cpu.bus.read(cpu.PC + 1)
+	cpu.C = cpu.bus.read(cpu.PC)
+	cpu.PC += 2
+}
+
 // INC B DONE
 func op_0x04(cpu *CPU) {
 	cpu.B++
@@ -37,8 +44,10 @@ func op_0x04(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(0)
-	if ((cpu.B - 1) & 0x04) != (cpu.B & 0x04) {
+	if ((cpu.B & 0xF) + ((cpu.B - 1) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
 }
 
@@ -51,8 +60,10 @@ func op_0x05(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((cpu.B + 1) & 0x10) != (cpu.B & 0x10) {
+	if ((cpu.B & 0xF) + ((cpu.B + 1) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
 
 
@@ -73,8 +84,10 @@ func op_0x0C(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(0)
-	if ((cpu.C - 1) & 0x04) != (cpu.C & 0x04) {
+	if ((cpu.C & 0xF) + ((cpu.C - 1) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
 }
 
@@ -87,10 +100,11 @@ func op_0x0D(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((cpu.C + 1) & 0x10) != (cpu.C & 0x10) {
+	if ((cpu.C & 0xF) + ((cpu.C + 1) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
-
 }
 
 // LD C, u8 DONE
@@ -114,8 +128,24 @@ func op_0x12(cpu *CPU) {
 // INC DE DONE
 func op_0x13(cpu *CPU) {
 	cpu.E++
-	if cpu.E == 0x00 {
+	if cpu.E == 0 {
 		cpu.D++
+	}
+}
+
+// INC D DONE
+func op_0x14(cpu *CPU) {
+	cpu.D++
+	if cpu.D == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	if ((cpu.D & 0xF) + ((cpu.D - 1) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
 }
 
@@ -128,8 +158,10 @@ func op_0x15(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((cpu.D + 1) & 0x10) != (cpu.D & 0x10) {
+	if ((cpu.D & 0xF) + ((cpu.D + 1) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
 }
 
@@ -142,29 +174,23 @@ func op_0x16(cpu *CPU) {
 // RLA DONE
 func op_0x17(cpu *CPU) {
 	tempcarry := cpu.getCFlag()
-	newcarry := (cpu.A & 0x80) >> 7
-	cpu.CFlag(newcarry)
+	newcarry := cpu.A >> 7
 	cpu.A = (cpu.A << 1 | tempcarry)
-	if cpu.A == 0 {
-		cpu.ZFlag(1)
-	} else {
-		cpu.ZFlag(0)
-	}
+	cpu.CFlag(newcarry)
+	cpu.ZFlag(0)
 	cpu.NFlag(0)
 	cpu.HFlag(0)
 }
 
 // JR i8 DONE
 func op_0x18(cpu *CPU) {
-	offset := cpu.bus.read(cpu.PC)
-	cpu.PC += uint16(offset + 1)
-	cpu.PC &= 0xFF
+	offset := int8(cpu.bus.read(cpu.PC) + 1)
+	cpu.PC += uint16(offset)
 }
 
 // LD A, (DE) DONE
 func op_0x1A(cpu *CPU) {
 	cpu.A = cpu.bus.read(uint16(cpu.D) << 8 | uint16(cpu.E))
-	cpu.A &= 0xFF
 }
 
 // INC E DONE
@@ -176,8 +202,10 @@ func op_0x1C(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(0)
-	if ((cpu.E - 1) & 0x04) != (cpu.E & 0x04) {
+	if ((cpu.E & 0xF) + ((cpu.E - 1) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
 }
 
@@ -190,8 +218,10 @@ func op_0x1D(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((cpu.E + 1) & 0x10) != (cpu.E & 0x10) {
+	if ((cpu.E & 0xF) + ((cpu.E + 1) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
 
 }
@@ -200,6 +230,17 @@ func op_0x1D(cpu *CPU) {
 func op_0x1E(cpu *CPU) {
 	cpu.E = cpu.bus.read(cpu.PC)
 	cpu.PC++
+}
+
+// RRA DONE
+func op_0x1F(cpu *CPU) {
+	tempcarry := cpu.getCFlag()
+	newcarry := (cpu.A & 0x01)
+	cpu.CFlag(newcarry)
+	cpu.A = (tempcarry | cpu.A >> 1)
+	cpu.ZFlag(0)
+	cpu.NFlag(0)
+	cpu.HFlag(0)
 }
 
 // JR NZ, i8 DONE
@@ -225,7 +266,7 @@ func op_0x21(cpu *CPU) {
 func op_0x22(cpu *CPU) {
 	cpu.bus.write((uint16(cpu.H) << 8 | uint16(cpu.L)), cpu.A)
 	cpu.L++
-	if cpu.L == 0x00 {
+	if cpu.L == 0 {
 		cpu.H++
 	}
 }
@@ -233,7 +274,7 @@ func op_0x22(cpu *CPU) {
 // INC HL DONE
 func op_0x23(cpu *CPU) {
 	cpu.L++
-	if cpu.L == 0x00 {
+	if cpu.L == 0 {
 		cpu.H++
 	}
 }
@@ -247,8 +288,10 @@ func op_0x24(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(0)
-	if ((cpu.H - 1) & 0x04) != (cpu.H & 0x04) {
+	if ((cpu.H & 0xF) + ((cpu.H - 1) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
 }
 
@@ -281,6 +324,18 @@ func op_0x2E(cpu *CPU) {
 
 }
 
+// JR NC, i8 DONE
+func op_0x30(cpu *CPU) {
+	if cpu.getCFlag() == 0 {
+		offset := int8(cpu.bus.read(cpu.PC) + 1)
+		cpu.PC += uint16(offset)
+		cpu.Cycles += 4
+	} else {
+		cpu.PC++
+	}
+
+}
+
 // LD SP, u16 DONE
 func op_0x31(cpu *CPU) {
 	cpu.SP = cpu.bus.read16(cpu.PC)
@@ -305,8 +360,10 @@ func op_0x3D(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((cpu.A + 1) & 0x10) != (cpu.A & 0x10) {
+	if ((cpu.A & 0xF) + ((cpu.A + 1) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
 
 }
@@ -325,6 +382,11 @@ func op_0x47(cpu *CPU) {
 // LD C, A DONE
 func op_0x4F(cpu *CPU) {
 	cpu.C = cpu.A
+}
+
+// LD D, B DONE
+func op_0x50(cpu *CPU) {
+	cpu.D = cpu.B
 }
 
 // LD D, A DONE
@@ -376,6 +438,8 @@ func op_0x86(cpu *CPU) {
 	}
 	if cpu.A & 0x80 != (cpu.A - cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))) & 0x80 {
 		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
 	}
 }
 
@@ -388,11 +452,15 @@ func op_0x90(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((cpu.A + cpu.B) & 0x10) != (cpu.A & 0x10) {
+	if ((cpu.A & 0xF) + ((cpu.A + cpu.B) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
 	if cpu.B > cpu.A {
 		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
 	}
 
 }
@@ -420,19 +488,23 @@ func op_0xBE(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((cpu.A + cpu.bus.read(cpu.PC)) & 0x10) != (result & 0x10) {
+	if ((result & 0xF) + ((cpu.A) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
-	if (result < 0) {
+	if cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L)) > cpu.A {
 		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
 	}
 }
 
 // POP BC DONE
 func op_0xC1(cpu *CPU) {
-	cpu.bus.write(cpu.SP, cpu.C)
+	cpu.C = cpu.bus.read(cpu.SP)
 	cpu.SP++
-	cpu.bus.write(cpu.SP, cpu.B)
+	cpu.B = cpu.bus.read(cpu.SP)
 	cpu.SP++
 }
 
@@ -473,15 +545,76 @@ func op_0xCD(cpu *CPU) {
 	cpu.PC = cpu.bus.read16(cpu.PC)
 }
 
+// ADC A, u8 DONE
+func op_0xCE(cpu *CPU) {
+	bitOverflow := uint16(cpu.A) + uint16(cpu.getCFlag()) + uint16(cpu.bus.read(cpu.PC))
+	cpu.A += (cpu.getCFlag() + cpu.bus.read(cpu.PC))
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	if ((cpu.A & 0xF) + ((cpu.A - cpu.getCFlag() - cpu.bus.read(cpu.PC)) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+
+	if bitOverflow > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+
+
+
+}
+
+// SUB A, u8 DONE
+func op_0xD6(cpu *CPU) {
+	cpu.A -= cpu.bus.read(cpu.PC)
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(1)
+	if ((cpu.A & 0xF) + ((cpu.A + cpu.bus.read(cpu.PC)) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	}
+	if cpu.bus.read(cpu.PC) > cpu.A {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+
+}
+
 // LD (FF00 + u8), A DONE
 func op_0xE0(cpu *CPU) {
 	cpu.bus.write((0xFF00 + uint16(cpu.bus.read(cpu.PC))), cpu.A)
 	cpu.PC++
 }
 
+// POP HL DONE
+func op_0xE1(cpu *CPU) {
+	cpu.L = cpu.bus.read(cpu.SP)
+	cpu.SP++
+	cpu.H = cpu.bus.read(cpu.SP)
+	cpu.SP++
+}
+
 // LD (FF00 + C), A DONE
 func op_0xE2(cpu *CPU) {
 	cpu.bus.write((0xFF00 + uint16(cpu.C)), cpu.A)
+}
+
+// PUSH HL DONE
+func op_0xE5(cpu *CPU) {
+	cpu.SP--
+	cpu.bus.write(cpu.SP, cpu.H)
+	cpu.SP--
+	cpu.bus.write(cpu.SP, cpu.L)
 }
 
 // LD (u16), A DONE
@@ -497,9 +630,25 @@ func op_0xF0(cpu *CPU) {
 
 }
 
+// POP AF DONE
+func op_0xF1(cpu *CPU) {
+	cpu.F = cpu.bus.read(cpu.SP)
+	cpu.SP++
+	cpu.A = cpu.bus.read(cpu.SP)
+	cpu.SP++
+}
+
 // DI DONE
 func op_0xF3(cpu *CPU) {
 	cpu.IME = 0
+}
+
+// PUSH AF DONE
+func op_0xF5(cpu *CPU) {
+	cpu.SP--
+	cpu.bus.write(cpu.SP, cpu.A)
+	cpu.SP--
+	cpu.bus.write(cpu.SP, cpu.F)
 }
 
 // CP A, u8 DONE
@@ -511,11 +660,15 @@ func op_0xFE(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((cpu.A + cpu.bus.read(cpu.PC)) & 0x10) != (result & 0x10) {
+	if ((result & 0xF) + ((cpu.A) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
 	}
-	if (result < 0) {
+	if cpu.bus.read(cpu.PC) > cpu.A {
 		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
 	}
 	cpu.PC++
 }
@@ -523,9 +676,9 @@ func op_0xFE(cpu *CPU) {
 // RL C DONE
 func cbop_0x11(cpu *CPU) {
 	tempcarry := cpu.getCFlag()
-	newcarry := (cpu.C & 0x80) >> 7
-	cpu.CFlag(newcarry)
+	newcarry := cpu.C >> 7
 	cpu.C = (cpu.C << 1 | tempcarry)
+	cpu.CFlag(newcarry)
 	if cpu.C == 0 {
 		cpu.ZFlag(1)
 	} else {
@@ -544,45 +697,45 @@ func cbop_0x7C(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(0)
-	cpu.HFlag(0)
+	cpu.HFlag(1)
 }
 
 var opcodes [256]Opcode = [256]Opcode {
-	Opcode{4, op_0x00}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_0x04}, Opcode{4, op_0x05}, Opcode{8, op_0x06}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_0x0C}, Opcode{4, op_0x0D}, Opcode{8, op_0x0E}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_0x11}, Opcode{8, op_0x12}, Opcode{8, op_0x13}, Opcode{4, op_null}, Opcode{4, op_0x15}, Opcode{8, op_0x16}, Opcode{4, op_0x17}, Opcode{12, op_0x18}, Opcode{8, op_null}, Opcode{8, op_0x1A}, Opcode{8, op_null}, Opcode{4, op_0x1C}, Opcode{4, op_0x1D}, Opcode{8, op_0x1E}, Opcode{4, op_null},
-	Opcode{8, op_0x20}, Opcode{12, op_0x21}, Opcode{8, op_0x22}, Opcode{8, op_0x23}, Opcode{4, op_0x24}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{8, op_0x28}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0x2E}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_0x31}, Opcode{8, op_0x32}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_0x3D}, Opcode{8, op_0x3E}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x47}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x4F},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x57}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x67}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{8, op_0x77}, Opcode{4, op_0x78}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_0x7B}, Opcode{4, op_0x7C}, Opcode{4, op_0x7D}, Opcode{8, op_null}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0x86}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
-	Opcode{4, op_0x90}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0xAF},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0xBE}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_0xC1}, Opcode{8, op_null}, Opcode{16, op_0xC3}, Opcode{4, op_null}, Opcode{16, op_0xC5}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{16, op_0xC9}, Opcode{8, op_null}, Opcode{4, op_0xCB}, Opcode{4, op_null}, Opcode{24, op_0xCD}, Opcode{8, op_null}, Opcode{4, op_null},
-	Opcode{4, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
-	Opcode{12, op_0xE0}, Opcode{12, op_null}, Opcode{8, op_0xE2}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{16, op_0xEA}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
-	Opcode{12, op_0xF0}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{4, op_0xF3}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0xFE}, Opcode{4, op_null},
+	Opcode{4, op_0x00}, Opcode{12, op_0x01}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_0x04}, Opcode{4, op_0x05}, Opcode{8, op_0x06}, Opcode{4, op_null}, Opcode{20, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_0x0C}, Opcode{4, op_0x0D}, Opcode{8, op_0x0E}, Opcode{4, op_null},
+	Opcode{4, op_null}, Opcode{12, op_0x11}, Opcode{8, op_0x12}, Opcode{8, op_0x13}, Opcode{4, op_0x14}, Opcode{4, op_0x15}, Opcode{8, op_0x16}, Opcode{4, op_0x17}, Opcode{12, op_0x18}, Opcode{8, op_null}, Opcode{8, op_0x1A}, Opcode{8, op_null}, Opcode{4, op_0x1C}, Opcode{4, op_0x1D}, Opcode{8, op_0x1E}, Opcode{4, op_0x1F},
+	Opcode{8, op_0x20}, Opcode{12, op_0x21}, Opcode{8, op_0x22}, Opcode{8, op_0x23}, Opcode{4, op_0x24}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{8, op_0x28}, Opcode{8, op_null}, Opcode{8, op_0x2A}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0x2E}, Opcode{4, op_null},
+	Opcode{8, op_0x30}, Opcode{12, op_0x31}, Opcode{8, op_0x32}, Opcode{8, op_null}, Opcode{12, op_null}, Opcode{12, op_null}, Opcode{12, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_0x3D}, Opcode{8, op_0x3E}, Opcode{4, op_null},
+	Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x47}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x4F},
+	Opcode{4, op_0x50}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x57}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
+	Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0x67}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
+	Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{8, op_0x77}, Opcode{4, op_0x78}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_0x7B}, Opcode{4, op_0x7C}, Opcode{4, op_0x7D}, Opcode{8, op_null}, Opcode{4, op_null},
+	Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0x86}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
+	Opcode{4, op_0x90}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
+	Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0xAF},
+	Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0xBE}, Opcode{4, op_null},
+	Opcode{8, op_null}, Opcode{12, op_0xC1}, Opcode{12, op_null}, Opcode{16, op_0xC3}, Opcode{12, op_null}, Opcode{16, op_0xC5}, Opcode{8, op_null}, Opcode{16, op_null}, Opcode{8, op_null}, Opcode{16, op_0xC9}, Opcode{12, op_null}, Opcode{4, op_0xCB}, Opcode{12, op_null}, Opcode{24, op_0xCD}, Opcode{8, op_0xCE}, Opcode{16, op_null},
+	Opcode{8, op_null}, Opcode{12, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{12, op_null}, Opcode{16, op_null}, Opcode{8, op_0xD6}, Opcode{16, op_null}, Opcode{8, op_null}, Opcode{16, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{12, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{16, op_null},
+	Opcode{12, op_0xE0}, Opcode{12, op_0xE1}, Opcode{8, op_0xE2}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{16, op_0xE5}, Opcode{8, op_null}, Opcode{16, op_null}, Opcode{16, op_null}, Opcode{4, op_null}, Opcode{16, op_0xEA}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{16, op_null},
+	Opcode{12, op_0xF0}, Opcode{12, op_0xF1}, Opcode{8, op_null}, Opcode{4, op_0xF3}, Opcode{4, op_null}, Opcode{16, op_0xF5}, Opcode{8, op_null}, Opcode{16, op_null}, Opcode{12, op_null}, Opcode{8, op_null}, Opcode{16, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0xFE}, Opcode{16, op_null},
 
 }
 
 var cbopcodes [256]Opcode = [256]Opcode {
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{8, cbop_0x11}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_0x7C}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
-	Opcode{4, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{20, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null}, Opcode{4, cbop_null}, Opcode{8, cbop_null}, Opcode{4, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_0x11}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_0x7C}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
 
 }

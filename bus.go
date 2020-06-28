@@ -11,8 +11,11 @@ type Bus struct {
 	ppu PPU
 	apu APU
 	HRAM [0x80]byte
+	timer Timer
 	IE byte
-	TAC byte
+	IF byte
+	SB byte
+	SC byte
 }
 
 
@@ -21,7 +24,10 @@ func (bus *Bus) read(addr uint16) byte {
 		case addr >= 0x0000 && addr <= 0x7FFF:
 			return bus.cartridge.ROM[addr]
 		case addr >= 0x8000 && addr <= 0x9FFF:
-			return bus.ppu.VRAM[addr - 0x8000]
+			if bus.ppu.cpuVRAMAccess == true {
+				return bus.ppu.VRAM[addr - 0x8000]
+			}
+			return 0
 		case addr >= 0xA000 && addr <= 0xBFFF:
 			return bus.cartridge.ERAM[addr - 0xA000]
 		case addr >= 0xC000 && addr <= 0xDFFF:
@@ -59,7 +65,9 @@ func (bus *Bus) read16(addr uint16) uint16 {
 func (bus *Bus) write(addr uint16, data byte) {
 	switch {
 		case addr >= 0x8000 && addr <= 0x9FFF:
+			// if bus.ppu.cpuVRAMAccess == true {
 			bus.ppu.VRAM[addr - 0x8000] = data
+			// }
 		case addr >= 0xA000 && addr <= 0xBFFF:
 			bus.cartridge.ERAM[addr - 0xA000] = data
 		case addr >= 0xC000 && addr <= 0xDFFF:
@@ -78,6 +86,10 @@ func (bus *Bus) write(addr uint16, data byte) {
 
 func (bus *Bus) readIO(addr uint16) byte {
 	switch addr {
+		case 0xFF01:
+			return bus.SB
+		case 0xFF02:
+			return bus.SC
 		case 0xFF40:
 			return bus.ppu.LCDC
 		case 0xFF42:
@@ -99,8 +111,15 @@ func (bus *Bus) readIO(addr uint16) byte {
 
 func (bus *Bus) writeIO(addr uint16, data byte) byte {
 	switch addr {
+		case 0xFF01:
+			bus.SB = data
+			// fmt.Println(data)
+		case 0xFF02:
+			bus.SC = data
 		case 0xFF07:
-			bus.TAC = data
+			bus.timer.TAC = data
+		case 0xFF0F:
+			bus.IF = data
 		case 0xFF11:
 			bus.apu.NR11 = data
 		case 0xFF12:
@@ -117,6 +136,8 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 			bus.apu.NR52 = data
 		case 0xFF40:
 			bus.ppu.LCDC = data
+		case 0xFF41:
+			bus.ppu.LCDCSTAT = data
 		case 0xFF42:
 			bus.ppu.SCY = data
 		case 0xFF43:
@@ -129,6 +150,7 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 			bus.ppu.BGP = data
 		case 0xFF50:
 			bus.cartridge.unmapBootROM()
+		
 		default:
 			fmt.Println("IO reg not handled!", addr)
 			os.Exit(3)

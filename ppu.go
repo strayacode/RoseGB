@@ -3,6 +3,8 @@ package main
 import (
 	// "fmt"
 	"math"
+	"os"
+	// "strconv"
 )
 
 type PPU struct {
@@ -18,6 +20,8 @@ type PPU struct {
 	LX byte
 	Cycles int
 	BGP byte
+	cpuVRAMAccess bool
+	cpuOAMAccess bool
 }
 
 func (ppu *PPU) tick() {
@@ -31,15 +35,12 @@ func (ppu *PPU) tick() {
 				ppu.LX = 0
 				ppu.drawScanLine()
 				ppu.LY++
-				
-				// fmt.Println(ppu.LCDCSTAT & 0x03)
-				
 				if ppu.LY == 144 {
 					// execute VBlank
 					ppu.LCDCSTAT |= 0x01
 					ppu.LCDCSTAT &= 0xFD
 				} else {
-					// execute OAM search
+					// execute OAM search (mode 2)
 					
 					ppu.LCDCSTAT |= 0x02
 					ppu.LCDCSTAT &= 0xFE
@@ -49,31 +50,32 @@ func (ppu *PPU) tick() {
 		case 1:
 			// VBlank
 			if ppu.Cycles >= 4560 {
-				// fmt.Println(ppu.LCDCSTAT & 0x03)
-				// ppu.clearFramebuffer()
 				ppu.Cycles = 0
 
 				ppu.LY = 0
 				ppu.LX = 0
+				// set to mode 2
+				ppu.LCDCSTAT |= 0x02
 				ppu.LCDCSTAT &= 0xFE
 				
 			} // implement as correct interrupt later
 		case 2: 
-			// search OAM still got to implement
-			// fmt.Println(ppu.LCDCSTAT & 0x03)
 			if ppu.Cycles >= 80 {
 				
 				ppu.Cycles = 0
+				// set to mode 3
 				ppu.LCDCSTAT |= 0x03
+				ppu.cpuVRAMAccess = false
 			}
 		case 3:
 			// read scanline from VRAM and put in framebuffer
-
+			
 			if ppu.Cycles >= 172 {
 				
-				// draw scanline
+				// set to mode 0
 				ppu.LCDCSTAT &= 0xFC
 				ppu.Cycles = 0
+				ppu.cpuVRAMAccess = true
 
 			}
 	}
@@ -91,25 +93,17 @@ func (ppu *PPU) drawScanLine() {
 	startAddr := ppu.getBGMapAddr() + uint16(tileY * 32) + uint16(tileX)
 	// iterate through tiles in a scanline
 	for i := 0; i < 20; i++ {
-		start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000])) - 0x8000
-		tileIndex := uint16(math.Floor((float64(ppu.SCY % 8)) / 2)) 
-		// fmt.Println(start, tileIndex)
-		ppu.drawBGLine(ppu.VRAM[start + (2 * tileIndex)], ppu.VRAM[start + (2 * tileIndex) + 1])
+		start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000]) * 16) - 0x8000
+		tileIndex := uint16((ppu.SCY + ppu.LY) % 8) * 2
 		
-		
-
-		
-		
+		ppu.drawBGLine(ppu.VRAM[start + tileIndex], ppu.VRAM[start + tileIndex + 1])
 	}
 }
 // take 2 bytes and add to framebuffer
 func (ppu *PPU) drawBGLine(left byte, right byte) {
-	
-	// fmt.Println(left, right)
-	
-
 	for i := 0; i < 8; i++ {
-		ppu.frameBuffer[ppu.LY][ppu.LX] = (((1 << i) & left) >> i | ((1 << i) & right) >> i)
+		// works fine
+		ppu.frameBuffer[ppu.LY][ppu.LX] = ((((1 << (7 - i)) & left)) >> (7 - i)) << 1 | ((1 << (7 - i)) & right) >> (7 - i)
 		ppu.LX++
 	}
 	
@@ -130,10 +124,15 @@ func (ppu *PPU) getBGMapAddr() uint16 {
 	return 0x9800
 }
 
-func (ppu *PPU) clearFramebuffer() {
-	for i := 0; i < 160; i++ {
-		for j := 0; j < 144; j++ {
-			ppu.frameBuffer[j][i] = 0
-		}
+func (ppu *PPU) writeDump(data string) {
+	f, err := os.OpenFile("dump.txt", os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+	    panic(err)
+	}
+
+	defer f.Close()
+
+	if _, err = f.WriteString(data); err != nil {
+	    panic(err)
 	}
 }

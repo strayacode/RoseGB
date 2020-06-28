@@ -5,53 +5,62 @@ import (
 	"flag"
 )
 
+
+type Window struct {
+	width int
+	height int
+	skipBootROM bool
+}
 func main() {
+
+	// init window with properties
+	window := Window{}
+	window.checkFlags()
 
 	// init cpu
 	cpu := CPU{}
 
+
 	// check skip bootrom flag
-	if checkBIOS() == false {
+	if window.skipBootROM == false {
 		cpu.bus.cartridge.loadBootROM()
 	} else {
 		cpu.skipBootROM()
 	}
 
 	title := "RoseGB - " + string(cpu.bus.cartridge.header.title[:])
-	rl.InitWindow(160, 144, title)
+	rl.InitWindow(int32(window.width), int32(window.height), title)
 
 	rl.SetTargetFPS(60)
 
-	
-
-
 	// mainloop which is executed 60 times per second
 	for !rl.WindowShouldClose() {
-
 		for i := 0; i < 17556; i++ {
 			cpu.tick()
 			cpu.bus.ppu.tick()
-
+			
 		}
-		// fmt.Println("new frame!")
-		// rl.BeginDrawing()
-
-		// rl.ClearBackground(rl.RayWhite)
-
-		// rl.DrawText("Congrats! You created your first window!", 190, 200, 20, rl.LightGray)
-
-		// rl.EndDrawing()
 		cpu.drawFramebuffer()
-		// cpu.debugVRAM()
+		// cpu.debugWRAM()
+		
 	}
 
 	rl.CloseWindow()
 }
 
-func checkBIOS() bool {
-	boolPtr := flag.Bool("skip-bootrom", false, "user specifies whether the bootrom should be loaded or not")
+func (window *Window) checkFlags() {
+	// flags to add
+	// window size
+	// emulation speed
+	var intvar int
+	var boolvar bool
+	flag.IntVar(&intvar, "window-size", 1, "specifies the window size as a multiple")
+	flag.BoolVar(&boolvar, "skip-bootrom", false, "user specifies whether the bootrom should be loaded or not")
+	window.width = 160 * intvar
+	window.height = 144 * intvar
+	window.skipBootROM = boolvar
 	flag.Parse()
-	return *boolPtr
+	
 }
 
 func (cpu *CPU) skipBootROM() {

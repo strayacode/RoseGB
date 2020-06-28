@@ -26,8 +26,8 @@ type CPU struct {
 func (cpu *CPU) tick() {
 	if cpu.Cycles == 0 {
 		// cpu.debugCPU()
-		// cpu.setPCBreakpoint(0xE0)
-
+		// cpu.setPCBreakpoint(0xC00B)
+		// fmt.Println(cpu.bus.read(cpu.PC))
 		// fmt.Println(strconv.FormatUint(uint64(cpu.PC), 16))
 		cpu.Opcode = cpu.bus.read(cpu.PC)
 		cpu.PC++
