@@ -14,6 +14,7 @@ type Bus struct {
 	timer Timer
 	IE byte
 	IF byte
+	IME byte
 	SB byte
 	SC byte
 }
@@ -112,8 +113,9 @@ func (bus *Bus) readIO(addr uint16) byte {
 func (bus *Bus) writeIO(addr uint16, data byte) byte {
 	switch addr {
 		case 0xFF01:
+			fmt.Println(data)
 			bus.SB = data
-			// fmt.Println(data)
+			
 		case 0xFF02:
 			bus.SC = data
 		case 0xFF07:
