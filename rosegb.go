@@ -1,67 +1,99 @@
 package main
 
 import (
-	"github.com/gen2brain/raylib-go/raylib"
+	g "github.com/AllenDang/giu"
+	"time"
+	"image"
+	"image/color"
+	"strconv"
+	"os"
 	"flag"
 )
 
+var (
+	upLeft = image.Point{0, 0}
+	lowRight = image.Point{160, 144}
+	texture *g.Texture
+	cpu = CPU{}
+)
 
-type Window struct {
-	width int
-	height int
-	skipBootROM bool
-}
 func main() {
-
-	// init window with properties
-	window := Window{}
-	window.checkFlags()
-
 	// init cpu
-	cpu := CPU{}
-
-
-	// check skip bootrom flag
-	if window.skipBootROM == false {
-		cpu.bus.cartridge.loadBootROM()
-	} else {
+	if checkBootromSkip() {
 		cpu.skipBootROM()
+	} else {
+		cpu.bus.cartridge.loadBootROM()
 	}
-
 	title := "RoseGB - " + string(cpu.bus.cartridge.header.title[:])
-	rl.InitWindow(int32(window.width), int32(window.height), title)
+	wnd := g.NewMasterWindow(title, 800, 400, g.MasterWindowFlagsNotResizable, nil)
 
-	rl.SetTargetFPS(60)
+    go refresh()
 
-	// mainloop which is executed 60 times per second
-	for !rl.WindowShouldClose() {
-		for i := 0; i < 17556; i++ {
-			cpu.tick()
-			cpu.bus.ppu.tick()
-			
-		}
-		cpu.drawFramebuffer()
-		// cpu.debugWRAM()
-		
-	}
-
-	rl.CloseWindow()
+    wnd.Main(loop)
 }
 
-func (window *Window) checkFlags() {
-	// flags to add
-	// window size
-	// emulation speed
-	var intvar int
-	var boolvar bool
-	flag.IntVar(&intvar, "window-size", 1, "specifies the window size as a multiple")
-	flag.BoolVar(&boolvar, "skip-bootrom", false, "user specifies whether the bootrom should be loaded or not")
-	window.width = 160 * intvar
-	window.height = 144 * intvar
-	window.skipBootROM = boolvar
-	flag.Parse()
+func loop() {
+	g.MainMenuBar(g.Layout{
+		g.Menu("File", g.Layout{
+			g.MenuItem("Exit", exit),
+		}),
+		
+	}).Build()
+
+	g.Window("RoseGB", 10, 30, 180, 180, g.Layout{
+		g.Custom(func() {
+			canvas := g.GetCanvas()
+			pos := g.GetCursorScreenPos()
+			if texture != nil {
+				canvas.AddImage(texture, pos.Add(image.Pt(0, 0)), pos.Add(image.Pt(160, 144)))
+			}
+		}),
+	})
+	g.Window("Debugger", 300, 30, 200, 300, g.Layout{
+		g.Label("A: " + strconv.Itoa(int(cpu.A))),
+		g.Label("B: " + strconv.Itoa(int(cpu.B))),
+		g.Label("C: " + strconv.Itoa(int(cpu.C))),
+		g.Label("D: " + strconv.Itoa(int(cpu.D))),
+		g.Label("E: " + strconv.Itoa(int(cpu.E))),
+		g.Label("F: " + strconv.Itoa(int(cpu.F))),
+		g.Label("H: " + strconv.Itoa(int(cpu.H))),
+		g.Label("L: " + strconv.Itoa(int(cpu.L))),
+		g.Label("LCDC: " + strconv.Itoa(int(cpu.bus.ppu.LCDC))),
+		g.Label("LCDCSTAT: " + strconv.Itoa(int(cpu.bus.ppu.LCDCSTAT))),
+	})
+	
+
 	
 }
+
+func exit() {
+	os.Exit(3)
+}
+
+func checkBootromSkip() bool {
+	boolPtr := flag.Bool("skip-bootrom", false, "user specifies whether they want to skip the bootrom or not")
+	flag.Parse()
+	return *boolPtr
+}
+
+func refresh() {
+    ticker := time.NewTicker(time.Second / 60)
+
+    for {
+    	for i := 0; i < 17556; i++ {
+    		cpu.tick()
+    		cpu.bus.ppu.tick()
+    	}
+    	// cpu.debugCPU()
+    	cpu.drawFramebuffer()
+        g.Update()
+
+        <-ticker.C
+    }
+   
+}
+
+
 
 func (cpu *CPU) skipBootROM() {
 	cpu.A = 0x01
@@ -119,9 +151,7 @@ func (cpu *CPU) drawFramebuffer() {
 	var colours [4]Colour = [4]Colour{
 		Colour{255, 255, 255, 255}, Colour{192, 192, 192, 255}, Colour{96, 96, 96, 255}, Colour{0, 0, 0, 255},
 	} 
-	rl.BeginDrawing()
-
-	rl.ClearBackground(rl.RayWhite)
+	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
 	for i := 0; i < 144; i++ {
 		for j := 0; j < 160; j++ {
 			// get palette
@@ -141,13 +171,17 @@ func (cpu *CPU) drawFramebuffer() {
 				tileColour = (tileColour & 0xC0) >> 6
 				
 			}
-
-			
+			colour := color.RGBA{colours[tileColour].R, colours[tileColour].G, colours[tileColour].B, colours[tileColour].A}
+			// fmt.Println(colour)
+			img.Set(j, i, colour)
 				
 			
-			rl.DrawRectangle(int32(j), int32(i), 1, 1, rl.NewColor(colours[tileColour].R, colours[tileColour].G, colours[tileColour].B, 255))
+			
 		}
 	}
 	
-	rl.EndDrawing()
+	texture, _ = g.NewTextureFromRgba(img)
+	
+	
 }
+

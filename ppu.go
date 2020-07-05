@@ -18,8 +18,12 @@ type PPU struct {
 	LY byte // keep track of the current line in the frame and index part of tile correctly
 	LYC byte
 	LX byte
+	WY byte
+	WX byte
 	Cycles int
 	BGP byte
+	OBP0 byte
+	OBP1 byte
 	cpuVRAMAccess bool
 	cpuOAMAccess bool
 }
