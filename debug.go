@@ -13,6 +13,7 @@ func (cpu *CPU) debugCPU() {
 	fmt.Println("H: ", strconv.FormatUint(uint64(cpu.H), 16), "L: ", strconv.FormatUint(uint64(cpu.L), 16))
 	fmt.Println("PC: ", strconv.FormatUint(uint64(cpu.PC), 16), "SP: ", strconv.FormatUint(uint64(cpu.SP), 16))
 	fmt.Println("LCDC: ", strconv.FormatUint(uint64(cpu.bus.ppu.LCDC), 16), "LCDCSTAT: ", strconv.FormatUint(uint64(cpu.bus.ppu.LCDCSTAT), 16))
+	fmt.Println("Opcode: 0x" + strconv.FormatUint(uint64(cpu.Opcode), 16))
 }
 
 func (cpu *CPU) debugPPU() {

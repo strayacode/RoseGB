@@ -23,10 +23,12 @@ type CPU struct {
 
 func (cpu *CPU) tick() {
 	if cpu.Cycles == 0 {
+		// cpu.debugCPU()
 		cpu.Opcode = cpu.bus.read(cpu.PC)
 		cpu.PC++
 		cpu.Cycles = opcodes[cpu.Opcode].Cycles
 		opcodes[cpu.Opcode].Exec(cpu)
+
 		
 		
 	}

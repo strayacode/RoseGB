@@ -79,7 +79,7 @@ func (bus *Bus) write(addr uint16, data byte) {
 		bus.interrupt.IE = data
 	default:
 		fmt.Println("DEBUG: non-writeable memory location!", addr)
-		os.Exit(3)
+		// os.Exit(3)
 	}
 }
 
@@ -111,7 +111,7 @@ func (bus *Bus) readIO(addr uint16) byte {
 func (bus *Bus) writeIO(addr uint16, data byte) byte {
 	switch addr {
 	case 0xFF01:
-		fmt.Println(data)
+		fmt.Println(string(data))
 		bus.SB = data
 	case 0xFF02:
 		bus.SC = data

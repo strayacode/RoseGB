@@ -82,9 +82,11 @@ func refresh() {
     for {
     	for i := 0; i < 17556; i++ {
     		cpu.tick()
+    		
+    		// cpu.setPCBreakpoint(0x740)
     		cpu.bus.ppu.tick()
     	}
-    	// cpu.debugCPU()
+    	
     	cpu.drawFramebuffer()
         g.Update()
 
@@ -155,8 +157,6 @@ func (cpu *CPU) drawFramebuffer() {
 	for i := 0; i < 144; i++ {
 		for j := 0; j < 160; j++ {
 			// get palette
-			
-			
 			tileColour := cpu.bus.read(0xFF47)
 			if cpu.bus.ppu.frameBuffer[i][j] == 0 {
 				tileColour &= 0x03
@@ -172,16 +172,9 @@ func (cpu *CPU) drawFramebuffer() {
 				
 			}
 			colour := color.RGBA{colours[tileColour].R, colours[tileColour].G, colours[tileColour].B, colours[tileColour].A}
-			// fmt.Println(colour)
 			img.Set(j, i, colour)
-				
-			
-			
 		}
 	}
-	
 	texture, _ = g.NewTextureFromRgba(img)
-	
-	
 }
 
