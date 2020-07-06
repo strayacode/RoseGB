@@ -8,12 +8,14 @@ import (
 	"strconv"
 	"os"
 	"flag"
+	// "fmt"
 )
 
 var (
 	upLeft = image.Point{0, 0}
 	lowRight = image.Point{160, 144}
 	texture *g.Texture
+	tileTexture *g.Texture
 	cpu = CPU{}
 )
 
@@ -49,17 +51,27 @@ func loop() {
 			}
 		}),
 	})
-	g.Window("Debugger", 300, 30, 200, 300, g.Layout{
-		g.Label("A: " + strconv.Itoa(int(cpu.A))),
-		g.Label("B: " + strconv.Itoa(int(cpu.B))),
-		g.Label("C: " + strconv.Itoa(int(cpu.C))),
-		g.Label("D: " + strconv.Itoa(int(cpu.D))),
-		g.Label("E: " + strconv.Itoa(int(cpu.E))),
-		g.Label("F: " + strconv.Itoa(int(cpu.F))),
-		g.Label("H: " + strconv.Itoa(int(cpu.H))),
-		g.Label("L: " + strconv.Itoa(int(cpu.L))),
-		g.Label("LCDC: " + strconv.Itoa(int(cpu.bus.ppu.LCDC))),
-		g.Label("LCDCSTAT: " + strconv.Itoa(int(cpu.bus.ppu.LCDCSTAT))),
+	g.Window("Debugger", 200, 30, 200, 300, g.Layout{
+		g.Label("A: 0x" + strconv.FormatUint(uint64(cpu.A), 16)),
+		g.Label("B: 0x" + strconv.FormatUint(uint64(cpu.B), 16)),
+		g.Label("C: 0x" + strconv.FormatUint(uint64(cpu.C), 16)),
+		g.Label("D: 0x" + strconv.FormatUint(uint64(cpu.D), 16)),
+		g.Label("E: 0x" + strconv.FormatUint(uint64(cpu.E), 16)),
+		g.Label("F: 0x" + strconv.FormatUint(uint64(cpu.F), 16)),
+		g.Label("H: 0x" + strconv.FormatUint(uint64(cpu.H), 16)),
+		g.Label("L: 0x" + strconv.FormatUint(uint64(cpu.L), 16)),
+		g.Label("LCDC: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDC), 16)),
+		g.Label("LCDCSTAT: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDCSTAT), 16)),
+	})
+
+	g.Window("Tile Viewer", 410, 30, 200, 300, g.Layout{
+		g.Custom(func() {
+			canvas := g.GetCanvas()
+			pos := g.GetCursorScreenPos()
+			if texture != nil {
+				canvas.AddImage(tileTexture, pos.Add(image.Pt(0, 0)), pos.Add(image.Pt(128, 192)))
+			}
+		}),
 	})
 	
 
@@ -86,7 +98,7 @@ func refresh() {
     		// cpu.setPCBreakpoint(0x740)
     		cpu.bus.ppu.tick()
     	}
-    	
+    	cpu.drawTileViewer()
     	cpu.drawFramebuffer()
         g.Update()
 
@@ -176,5 +188,57 @@ func (cpu *CPU) drawFramebuffer() {
 		}
 	}
 	texture, _ = g.NewTextureFromRgba(img)
+}
+
+func (cpu *CPU) drawTileViewer() {
+	var colours [4]Colour = [4]Colour{
+		Colour{255, 255, 255, 255}, Colour{192, 192, 192, 255}, Colour{96, 96, 96, 255}, Colour{0, 0, 0, 255},
+	} 
+	img := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{128, 192}})
+	x := 0
+	y := 0
+	for i := 0; i < 0x1800; i += 2 {
+		for j := 0; j < 8; j++ {
+			// works fine
+			tileColour := cpu.bus.read(0xFF47)
+			value := ((((1 << (7 - j)) & cpu.bus.ppu.VRAM[i])) >> (7 - j)) << 1 | ((1 << (7 - j)) & cpu.bus.ppu.VRAM[i + 1]) >> (7 - j)
+			if value == 0 {
+				tileColour &= 0x03
+				
+			} else if value == 1 {
+				tileColour = (tileColour & 0xC) >> 2
+				
+			} else if value == 2 {
+				tileColour = (tileColour & 0x30) >> 4
+				
+			} else if value == 3 {
+				tileColour = (tileColour & 0xC0) >> 6	
+			}
+			colour := color.RGBA{colours[tileColour].R, colours[tileColour].G, colours[tileColour].B, colours[tileColour].A}
+			
+			img.Set(x, y, colour)
+			x++
+			
+
+			if x % 8 == 0 {
+				x -= 8
+
+				
+			}
+		}
+		y++
+		if y % 8 == 0 {
+			y -= 8
+			x += 8
+			if x == 128 {
+				y += 8
+				x = 0
+			}
+		}
+
+
+	
+	}
+	tileTexture, _ = g.NewTextureFromRgba(img)
 }
 

@@ -97,10 +97,18 @@ func (ppu *PPU) drawScanLine() {
 	startAddr := ppu.getBGMapAddr() + uint16(tileY * 32) + uint16(tileX)
 	// iterate through tiles in a scanline
 	for i := 0; i < 20; i++ {
-		start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000]) * 16) - 0x8000
-		tileIndex := uint16((ppu.SCY + ppu.LY) % 8) * 2
-		
-		ppu.drawBGLine(ppu.VRAM[start + tileIndex], ppu.VRAM[start + tileIndex + 1])
+		if ppu.getBGStartAddr() == 0x8000 {
+			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000]) * 16) - 0x8000
+			tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
+			
+			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+		} else {
+			// fmt.Println("8800 addressing")
+			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[uint16(int(startAddr) + 128) + uint16(i) - 0x8000]) * 16) - 0x8000
+			tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
+			
+			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+		}
 	}
 }
 // take 2 bytes and add to framebuffer
@@ -118,7 +126,7 @@ func (ppu *PPU) getBGStartAddr() uint16 {
 	if ppu.LCDC & 0x10 >> 4 == 1 {
 		return 0x8000
 	}
-	return 0x8800
+	return 0x9000
 }
 
 func (ppu *PPU) getBGMapAddr() uint16 {
