@@ -218,12 +218,8 @@ func (cpu *CPU) drawTileViewer() {
 			
 			img.Set(x, y, colour)
 			x++
-			
-
 			if x % 8 == 0 {
 				x -= 8
-
-				
 			}
 		}
 		y++
@@ -234,10 +230,7 @@ func (cpu *CPU) drawTileViewer() {
 				y += 8
 				x = 0
 			}
-		}
-
-
-	
+		}	
 	}
 	tileTexture, _ = g.NewTextureFromRgba(img)
 }

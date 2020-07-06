@@ -78,7 +78,7 @@ func (bus *Bus) write(addr uint16, data byte) {
 	case addr == 0xFFFF:
 		bus.interrupt.IE = data
 	default:
-		fmt.Println("DEBUG: non-writeable memory location!", addr)
+		// fmt.Println("DEBUG: non-writeable memory location!", addr)
 		// os.Exit(3)
 	}
 }
