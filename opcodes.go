@@ -400,7 +400,7 @@ func op_0x29(cpu *CPU) {
 	} else {
 		cpu.CFlag(0)
 	}
-	if ((hl & 0xF0FF) + ((hl / 2) & 0xF0FF)) & 0x1000 == 0x1000 {
+	if ((hl & 0xF0FF) + ((hl) & 0xF0FF)) & 0x1000 == 0x1000 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
@@ -562,14 +562,14 @@ func op_0x39(cpu *CPU) {
 	}
 	hl += cpu.SP
 	
-	if ((hl & 0xF0FF) + ((hl - cpu.SP) & 0xF0FF)) & 0x1000 == 0x1000 {
+	if ((hl & 0x0FFF) + ((cpu.SP) & 0x0FFF)) & 0x1000 == 0x1000 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
 	}
 	cpu.NFlag(0)
 	cpu.H = byte((hl >> 8) & 0xFF)
-	cpu.L = byte(hl) & 0xFF
+	cpu.L = byte(hl & 0xFF)
 }
 
 // LD A, (HL-) 
@@ -947,9 +947,37 @@ func op_0x7F(cpu *CPU) {
 	cpu.A = cpu.A
 }
 
+// ADD A, B
+func op_0x80(cpu *CPU) {
+	result := uint16(cpu.A) + uint16(cpu.B)
+	if ((cpu.A & 0xF) + ((cpu.B) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	cpu.A += cpu.B
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	
+	if result > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
 // ADD A, C
 func op_0x81(cpu *CPU) {
 	result := uint16(cpu.A) + uint16(cpu.C)
+	if ((cpu.A & 0xF) + ((cpu.C) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
 	cpu.A += cpu.C
 	if cpu.A == 0 {
 		cpu.ZFlag(1)
@@ -957,11 +985,6 @@ func op_0x81(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(0)
-	if ((cpu.A & 0xF) + ((cpu.A - cpu.C) & 0xF)) & 0x10 == 0x10 {
-		cpu.HFlag(1)
-	} else {
-		cpu.HFlag(0)
-	}
 	if result > 0xFF {
 		cpu.CFlag(1)
 	} else {
@@ -972,6 +995,11 @@ func op_0x81(cpu *CPU) {
 // ADD A, D
 func op_0x82(cpu *CPU) {
 	result := uint16(cpu.A) + uint16(cpu.D)
+	if ((cpu.A & 0xF) + ((cpu.D) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
 	cpu.A += cpu.D
 	if cpu.A == 0 {
 		cpu.ZFlag(1)
@@ -979,11 +1007,76 @@ func op_0x82(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(0)
-	if ((cpu.A & 0xF) + ((cpu.A - cpu.D) & 0xF)) & 0x10 == 0x10 {
+	
+	if result > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// ADD A, E
+func op_0x83(cpu *CPU) {
+	result := uint16(cpu.A) + uint16(cpu.E)
+	if ((cpu.A & 0xF) + ((cpu.E) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
 	}
+	cpu.A += cpu.E
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	
+	if result > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// ADD A, H
+func op_0x84(cpu *CPU) {
+	result := uint16(cpu.A) + uint16(cpu.H)
+	if ((cpu.A & 0xF) + ((cpu.H) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	cpu.A += cpu.H
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	
+	if result > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// ADD A, L
+func op_0x85(cpu *CPU) {
+	result := uint16(cpu.A) + uint16(cpu.L)
+	if ((cpu.A & 0xF) + ((cpu.L) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	cpu.A += cpu.L
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	
 	if result > 0xFF {
 		cpu.CFlag(1)
 	} else {
@@ -994,6 +1087,11 @@ func op_0x82(cpu *CPU) {
 // ADD A, (HL)
 func op_0x86(cpu *CPU) {
 	result := uint16(cpu.A) + uint16(cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L)))
+	if ((cpu.A & 0xF) + ((cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
 	cpu.A += cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
 	if cpu.A == 0 {
 		cpu.ZFlag(1)
@@ -1001,12 +1099,77 @@ func op_0x86(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(0)
-	if ((cpu.A & 0xF) + ((cpu.A - cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L)) & 0xF))) & 0x10 == 0x10 {
+	
+	if result > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// ADD A, A
+func op_0x87(cpu *CPU) {
+	result := uint16(cpu.A) + uint16(cpu.A)
+	if ((cpu.A & 0xF) + ((cpu.A) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
 	}
+	cpu.A += cpu.A
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	
 	if result > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// ADC A, B 
+func op_0x88(cpu *CPU) {
+	bitOverflow := uint16(cpu.A) + uint16(cpu.getCFlag()) + uint16(cpu.B)
+	if ((cpu.A & 0xF) + (cpu.getCFlag() & 0xF) + (cpu.B & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	cpu.A += (cpu.getCFlag() + cpu.B)
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+
+	if bitOverflow > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// ADC A, C
+func op_0x89(cpu *CPU) {
+	bitOverflow := uint16(cpu.A) + uint16(cpu.getCFlag()) + uint16(cpu.C)
+	if ((cpu.A & 0xF) + (cpu.getCFlag() & 0xF) + (cpu.C & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	cpu.A += (cpu.getCFlag() + cpu.C)
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+
+	if bitOverflow > 0xFF {
 		cpu.CFlag(1)
 	} else {
 		cpu.CFlag(0)
@@ -1016,17 +1179,64 @@ func op_0x86(cpu *CPU) {
 // ADC A, D 
 func op_0x8A(cpu *CPU) {
 	bitOverflow := uint16(cpu.A) + uint16(cpu.getCFlag()) + uint16(cpu.D)
+	if ((cpu.A & 0xF) + (cpu.getCFlag() & 0xF) + (cpu.D & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
 	cpu.A += (cpu.getCFlag() + cpu.D)
 	if cpu.A == 0 {
 		cpu.ZFlag(1)
 	} else {
 		cpu.ZFlag(0)
 	}
-	if ((cpu.A & 0xF) + ((cpu.A - cpu.getCFlag() - cpu.D) & 0xF)) & 0x10 == 0x10 {
+	cpu.NFlag(0)
+
+	if bitOverflow > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// ADC A, E
+func op_0x8B(cpu *CPU) {
+	bitOverflow := uint16(cpu.A) + uint16(cpu.getCFlag()) + uint16(cpu.E)
+	if ((cpu.A & 0xF) + (cpu.getCFlag() & 0xF) + (cpu.E & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
 	}
+	cpu.A += (cpu.getCFlag() + cpu.E)
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+
+	if bitOverflow > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// ADC A, H
+func op_0x8C(cpu *CPU) {
+	bitOverflow := uint16(cpu.A) + uint16(cpu.getCFlag()) + uint16(cpu.H)
+	if ((cpu.A & 0xF) + (cpu.getCFlag() & 0xF) + (cpu.H & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	cpu.A += (cpu.getCFlag() + cpu.H)
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
 
 	if bitOverflow > 0xFF {
 		cpu.CFlag(1)
@@ -1038,17 +1248,41 @@ func op_0x8A(cpu *CPU) {
 // ADC A, L 
 func op_0x8D(cpu *CPU) {
 	bitOverflow := uint16(cpu.A) + uint16(cpu.getCFlag()) + uint16(cpu.L)
+	if ((cpu.A & 0xF) + (cpu.getCFlag() & 0xF) + (cpu.L & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
 	cpu.A += (cpu.getCFlag() + cpu.L)
 	if cpu.A == 0 {
 		cpu.ZFlag(1)
 	} else {
 		cpu.ZFlag(0)
 	}
-	if ((cpu.A & 0xF) + ((cpu.A - cpu.getCFlag() - cpu.L) & 0xF)) & 0x10 == 0x10 {
+	cpu.NFlag(0)
+
+	if bitOverflow > 0xFF {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// ADC A, A
+func op_0x8F(cpu *CPU) {
+	bitOverflow := uint16(cpu.A) + uint16(cpu.getCFlag()) + uint16(cpu.A)
+	if ((cpu.A & 0xF) + (cpu.getCFlag() & 0xF) + (cpu.A & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
 	}
+	cpu.A += (cpu.getCFlag() + cpu.A)
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
 
 	if bitOverflow > 0xFF {
 		cpu.CFlag(1)
@@ -1059,14 +1293,7 @@ func op_0x8D(cpu *CPU) {
 
 // SUB A, B 
 func op_0x90(cpu *CPU) {
-	cpu.A -= cpu.B
-	if cpu.A == 0 {
-		cpu.ZFlag(1)
-	} else {
-		cpu.ZFlag(0)
-	}
-	cpu.NFlag(1)
-	if ((cpu.A & 0xF) + ((cpu.A + cpu.B) & 0xF)) & 0x10 == 0x10 {
+	if ((cpu.A & 0xF) - ((cpu.B) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
@@ -1076,19 +1303,20 @@ func op_0x90(cpu *CPU) {
 	} else {
 		cpu.CFlag(0)
 	}
-
-}
-
-// SUB A, C
-func op_0x91(cpu *CPU) {
-	cpu.A -= cpu.C
+	cpu.A -= cpu.B
 	if cpu.A == 0 {
 		cpu.ZFlag(1)
 	} else {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((cpu.A & 0xF) + ((cpu.A + cpu.C) & 0xF)) & 0x10 == 0x10 {
+	
+
+}
+
+// SUB A, C
+func op_0x91(cpu *CPU) {
+	if ((cpu.A & 0xF) - ((cpu.C) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
@@ -1098,6 +1326,15 @@ func op_0x91(cpu *CPU) {
 	} else {
 		cpu.CFlag(0)
 	}
+	cpu.A -= cpu.C
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(1)
+	
+	
 
 }
 
@@ -1304,12 +1541,33 @@ func op_0xB8(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((result & 0xF) + ((cpu.A) & 0xF)) & 0x10 == 0x10 {
+	if ((cpu.A & 0xF) - ((cpu.B) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
 	}
 	if cpu.B > cpu.A {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// CP A, C
+func op_0xB9(cpu *CPU) {
+	result := cpu.A - cpu.C
+	if result == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(1)
+	if ((cpu.A & 0xF) - ((cpu.C) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	if cpu.C > cpu.A {
 		cpu.CFlag(1)
 	} else {
 		cpu.CFlag(0)
@@ -1325,7 +1583,7 @@ func op_0xBA(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((result & 0xF) + ((cpu.A) & 0xF)) & 0x10 == 0x10 {
+	if ((cpu.A & 0xF) - ((cpu.D) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
@@ -1346,12 +1604,54 @@ func op_0xBB(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((result & 0xF) + ((cpu.A) & 0xF)) & 0x10 == 0x10 {
+	if ((cpu.A & 0xF) - ((cpu.E) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
 	}
 	if cpu.E > cpu.A {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// CP A, H
+func op_0xBC(cpu *CPU) {
+	result := cpu.A - cpu.H
+	if result == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(1)
+	if ((cpu.A & 0xF) - ((cpu.H) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	if cpu.H > cpu.A {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// CP A, L
+func op_0xBD(cpu *CPU) {
+	result := cpu.A - cpu.L
+	if result == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(1)
+	if ((cpu.A & 0xF) - ((cpu.L) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	if cpu.L > cpu.A {
 		cpu.CFlag(1)
 	} else {
 		cpu.CFlag(0)
@@ -1368,12 +1668,33 @@ func op_0xBE(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((result & 0xF) + ((result + cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))) & 0xF)) & 0x10 == 0x10 {
+	if ((cpu.A & 0xF) - ((cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
 	}
 	if cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L)) > cpu.A {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+}
+
+// CP A, A
+func op_0xBF(cpu *CPU) {
+	result := cpu.A - cpu.A
+	if result == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(1)
+	if ((cpu.A & 0xF) - ((cpu.A) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	if cpu.A > cpu.A {
 		cpu.CFlag(1)
 	} else {
 		cpu.CFlag(0)
@@ -1440,7 +1761,12 @@ func op_0xC5(cpu *CPU) {
 
 // ADD A, u8
 func op_0xC6(cpu *CPU) {
-	result := uint16(cpu.A + cpu.bus.read(cpu.PC))
+	result := uint16(cpu.A) + uint16(cpu.bus.read(cpu.PC))
+	if ((cpu.A & 0xF) + ((cpu.bus.read(cpu.PC)) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
 	cpu.A += cpu.bus.read(cpu.PC)
 	if cpu.A == 0 {
 		cpu.ZFlag(1)
@@ -1448,11 +1774,7 @@ func op_0xC6(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(0)
-	if ((cpu.A & 0xF) + ((cpu.A - cpu.bus.read(cpu.PC)) & 0xF)) & 0x10 == 0x10 {
-		cpu.HFlag(1)
-	} else {
-		cpu.HFlag(0)
-	}
+	
 	if result > 0xFF {
 		cpu.CFlag(1)
 	} else {
@@ -1535,17 +1857,18 @@ func op_0xCD(cpu *CPU) {
 // ADC A, u8 
 func op_0xCE(cpu *CPU) {
 	bitOverflow := uint16(cpu.A) + uint16(cpu.getCFlag()) + uint16(cpu.bus.read(cpu.PC))
+	if ((cpu.A & 0xF) + (cpu.getCFlag() & 0xF) + (cpu.bus.read(cpu.PC) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
 	cpu.A += (cpu.getCFlag() + cpu.bus.read(cpu.PC))
 	if cpu.A == 0 {
 		cpu.ZFlag(1)
 	} else {
 		cpu.ZFlag(0)
 	}
-	if ((cpu.A & 0xF) + ((cpu.A - cpu.getCFlag() - cpu.bus.read(cpu.PC)) & 0xF)) & 0x10 == 0x10 {
-		cpu.HFlag(1)
-	} else {
-		cpu.HFlag(0)
-	}
+	cpu.NFlag(0)
 
 	if bitOverflow > 0xFF {
 		cpu.CFlag(1)
@@ -1622,6 +1945,16 @@ func op_0xD5(cpu *CPU) {
 
 // SUB A, u8 
 func op_0xD6(cpu *CPU) {
+	if ((cpu.A & 0xF) - ((cpu.bus.read(cpu.PC)) & 0xF)) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+	if cpu.bus.read(cpu.PC) > cpu.A {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
 	cpu.A -= cpu.bus.read(cpu.PC)
 	if cpu.A == 0 {
 		cpu.ZFlag(1)
@@ -1629,14 +1962,8 @@ func op_0xD6(cpu *CPU) {
 		cpu.ZFlag(0)
 	}
 	cpu.NFlag(1)
-	if ((cpu.A & 0xF) + ((cpu.A + cpu.bus.read(cpu.PC)) & 0xF)) & 0x10 == 0x10 {
-		cpu.HFlag(1)
-	}
-	if cpu.bus.read(cpu.PC) > cpu.A {
-		cpu.CFlag(1)
-	} else {
-		cpu.CFlag(0)
-	}
+	
+	
 	cpu.PC++
 }
 
@@ -1693,6 +2020,28 @@ func op_0xDC(cpu *CPU) {
 	} else {
 		cpu.PC += 2
 	}
+}
+
+// SBC A, u8 
+func op_0xDE(cpu *CPU) {
+	if ((cpu.A & 0xF) - (cpu.getCFlag() & 0xF) - (cpu.bus.read(cpu.PC)) & 0xF) & 0x10 == 0x10 {
+		cpu.HFlag(1)
+	} else {
+		cpu.HFlag(0)
+	}
+
+	if cpu.bus.read(cpu.PC) + cpu.getCFlag() > cpu.A {
+		cpu.CFlag(1)
+	} else {
+		cpu.CFlag(0)
+	}
+	cpu.A -= (cpu.getCFlag() + cpu.bus.read(cpu.PC))
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	
 }
 
 // RST 0x18
@@ -2060,12 +2409,12 @@ var opcodes [256]Opcode = [256]Opcode {
 	Opcode{4, op_0x50}, Opcode{4, op_0x51}, Opcode{4, op_0x52}, Opcode{4, op_0x53}, Opcode{4, op_0x54}, Opcode{4, op_0x55}, Opcode{8, op_0x56}, Opcode{4, op_0x57}, Opcode{4, op_0x58}, Opcode{4, op_0x59}, Opcode{4, op_0x5A}, Opcode{4, op_0x5B}, Opcode{4, op_0x5C}, Opcode{4, op_0x5D}, Opcode{8, op_0x5E}, Opcode{4, op_0x5F},
 	Opcode{4, op_0x60}, Opcode{4, op_0x61}, Opcode{4, op_0x62}, Opcode{4, op_0x63}, Opcode{4, op_0x64}, Opcode{4, op_0x65}, Opcode{8, op_0x66}, Opcode{4, op_0x67}, Opcode{4, op_0x68}, Opcode{4, op_0x69}, Opcode{4, op_0x6A}, Opcode{4, op_0x6B}, Opcode{4, op_0x6C}, Opcode{4, op_0x6D}, Opcode{8, op_0x6E}, Opcode{4, op_0x6F},
 	Opcode{8, op_0x70}, Opcode{8, op_0x71}, Opcode{8, op_0x72}, Opcode{8, op_0x73}, Opcode{8, op_0x74}, Opcode{8, op_0x75}, Opcode{4, op_0x76}, Opcode{8, op_0x77}, Opcode{4, op_0x78}, Opcode{4, op_0x79}, Opcode{4, op_0x7A}, Opcode{4, op_0x7B}, Opcode{4, op_0x7C}, Opcode{4, op_0x7D}, Opcode{8, op_0x7E}, Opcode{4, op_0x7F},
-	Opcode{4, op_null}, Opcode{4, op_0x81}, Opcode{4, op_0x82}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0x86}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_0x8A}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_0x8D}, Opcode{8, op_null}, Opcode{4, op_null},
+	Opcode{4, op_0x80}, Opcode{4, op_0x81}, Opcode{4, op_0x82}, Opcode{4, op_0x83}, Opcode{4, op_0x84}, Opcode{4, op_0x85}, Opcode{8, op_0x86}, Opcode{4, op_0x87}, Opcode{4, op_0x88}, Opcode{4, op_0x89}, Opcode{4, op_0x8A}, Opcode{4, op_0x8B}, Opcode{4, op_0x8C}, Opcode{4, op_0x8D}, Opcode{8, op_null}, Opcode{4, op_0x8F},
 	Opcode{4, op_0x90}, Opcode{4, op_0x91}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_0x99}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_null},
 	Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{4, op_0xA7}, Opcode{4, op_null}, Opcode{4, op_0xA9}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{4, op_0xAD}, Opcode{8, op_0xAE}, Opcode{4, op_0xAF},
-	Opcode{4, op_0xB0}, Opcode{4, op_0xB1}, Opcode{4, op_0xB2}, Opcode{4, op_0xB3}, Opcode{4, op_0xB4}, Opcode{4, op_0xB5}, Opcode{8, op_0xB6}, Opcode{4, op_0xB7}, Opcode{4, op_0xB8}, Opcode{4, op_null}, Opcode{4, op_0xBA}, Opcode{4, op_0xBB}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0xBE}, Opcode{4, op_null},
+	Opcode{4, op_0xB0}, Opcode{4, op_0xB1}, Opcode{4, op_0xB2}, Opcode{4, op_0xB3}, Opcode{4, op_0xB4}, Opcode{4, op_0xB5}, Opcode{8, op_0xB6}, Opcode{4, op_0xB7}, Opcode{4, op_0xB8}, Opcode{4, op_0xB9}, Opcode{4, op_0xBA}, Opcode{4, op_0xBB}, Opcode{4, op_0xBC}, Opcode{4, op_0xBD}, Opcode{8, op_0xBE}, Opcode{4, op_0xBF},
 	Opcode{8, op_0xC0}, Opcode{12, op_0xC1}, Opcode{12, op_0xC2}, Opcode{16, op_0xC3}, Opcode{12, op_0xC4}, Opcode{16, op_0xC5}, Opcode{8, op_0xC6}, Opcode{16, op_0xC7}, Opcode{8, op_0xC8}, Opcode{16, op_0xC9}, Opcode{12, op_0xCA}, Opcode{4, op_0xCB}, Opcode{12, op_0xCC}, Opcode{24, op_0xCD}, Opcode{8, op_0xCE}, Opcode{16, op_0xCF},
-	Opcode{8, op_0xD0}, Opcode{12, op_0xD1}, Opcode{12, op_0xD2}, Opcode{8, op_null}, Opcode{12, op_0xD4}, Opcode{16, op_0xD5}, Opcode{8, op_0xD6}, Opcode{16, op_0xD7}, Opcode{8, op_0xD8}, Opcode{16, op_0xD9}, Opcode{12, op_0xDA}, Opcode{8, op_null}, Opcode{12, op_0xDC}, Opcode{4, op_null}, Opcode{8, op_null}, Opcode{16, op_0xDF},
+	Opcode{8, op_0xD0}, Opcode{12, op_0xD1}, Opcode{12, op_0xD2}, Opcode{8, op_null}, Opcode{12, op_0xD4}, Opcode{16, op_0xD5}, Opcode{8, op_0xD6}, Opcode{16, op_0xD7}, Opcode{8, op_0xD8}, Opcode{16, op_0xD9}, Opcode{12, op_0xDA}, Opcode{8, op_null}, Opcode{12, op_0xDC}, Opcode{4, op_null}, Opcode{8, op_0xDE}, Opcode{16, op_0xDF},
 	Opcode{12, op_0xE0}, Opcode{12, op_0xE1}, Opcode{8, op_0xE2}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{16, op_0xE5}, Opcode{8, op_0xE6}, Opcode{16, op_0xE7}, Opcode{16, op_null}, Opcode{4, op_0xE9}, Opcode{16, op_0xEA}, Opcode{8, op_null}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0xEE}, Opcode{16, op_0xEF},
 	Opcode{12, op_0xF0}, Opcode{12, op_0xF1}, Opcode{8, op_0xF2}, Opcode{4, op_0xF3}, Opcode{4, op_null}, Opcode{16, op_0xF5}, Opcode{8, op_0xF6}, Opcode{16, op_0xF7}, Opcode{12, op_0xF8}, Opcode{8, op_0xF9}, Opcode{16, op_0xFA}, Opcode{4, op_0xFB}, Opcode{4, op_null}, Opcode{4, op_null}, Opcode{8, op_0xFE}, Opcode{16, op_0xFF},
 
