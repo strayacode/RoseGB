@@ -26,6 +26,7 @@ type PPU struct {
 	OBP1 byte
 	cpuVRAMAccess bool
 	cpuOAMAccess bool
+	DMA byte
 }
 
 func (ppu *PPU) tick() {

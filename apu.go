@@ -22,4 +22,5 @@ type APU struct {
 	NR50 byte
 	NR51 byte
 	NR52 byte
+	WAVEPATTERNRAM [16]byte
 }

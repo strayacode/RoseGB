@@ -13,6 +13,7 @@ type Bus struct {
 	HRAM [0x80]byte
 	timer Timer
 	interrupt Interrupt
+	keypad Keypad
 	SB byte
 	SC byte
 }
@@ -85,6 +86,8 @@ func (bus *Bus) write(addr uint16, data byte) {
 
 func (bus *Bus) readIO(addr uint16) byte {
 	switch addr {
+	case 0xFF00:
+		return bus.keypad.P1
 	case 0xFF01:
 		return bus.SB
 	case 0xFF02:
@@ -110,6 +113,8 @@ func (bus *Bus) readIO(addr uint16) byte {
 
 func (bus *Bus) writeIO(addr uint16, data byte) byte {
 	switch addr {
+	case 0xFF00:
+		bus.keypad.P1 = data
 	case 0xFF01:
 		fmt.Println(string(data))
 		bus.SB = data
@@ -161,6 +166,38 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 		bus.apu.NR51 = data
 	case 0xFF26:
 		bus.apu.NR52 = data
+	case 0xFF30:
+		bus.apu.WAVEPATTERNRAM[0] = data
+	case 0xFF31:
+		bus.apu.WAVEPATTERNRAM[1] = data
+	case 0xFF32:
+		bus.apu.WAVEPATTERNRAM[2] = data
+	case 0xFF33:
+		bus.apu.WAVEPATTERNRAM[3] = data
+	case 0xFF34:
+		bus.apu.WAVEPATTERNRAM[4] = data
+	case 0xFF35:
+		bus.apu.WAVEPATTERNRAM[5] = data
+	case 0xFF36:
+		bus.apu.WAVEPATTERNRAM[6] = data
+	case 0xFF37:
+		bus.apu.WAVEPATTERNRAM[7] = data
+	case 0xFF38:
+		bus.apu.WAVEPATTERNRAM[8] = data
+	case 0xFF39:
+		bus.apu.WAVEPATTERNRAM[9] = data
+	case 0xFF3A:
+		bus.apu.WAVEPATTERNRAM[10] = data
+	case 0xFF3B:
+		bus.apu.WAVEPATTERNRAM[11] = data
+	case 0xFF3C:
+		bus.apu.WAVEPATTERNRAM[12] = data
+	case 0xFF3D:
+		bus.apu.WAVEPATTERNRAM[13] = data
+	case 0xFF3E:
+		bus.apu.WAVEPATTERNRAM[14] = data
+	case 0xFF3F:
+		bus.apu.WAVEPATTERNRAM[15] = data
 	case 0xFF40:
 		bus.ppu.LCDC = data
 	case 0xFF41:
@@ -173,6 +210,8 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 		bus.ppu.LY = data
 	case 0xFF45:
 		bus.ppu.LYC = data
+	case 0xFF46:
+		bus.ppu.DMA = data
 	case 0xFF47:
 		bus.ppu.BGP = data
 	case 0xFF48:
