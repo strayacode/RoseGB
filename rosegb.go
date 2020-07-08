@@ -100,6 +100,7 @@ func refresh() {
     	}
     	cpu.drawTileViewer()
     	cpu.drawFramebuffer()
+    	// cpu.debugVRAM()
         g.Update()
 
         <-ticker.C
