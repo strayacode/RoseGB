@@ -23,14 +23,14 @@ type CPU struct {
 
 func (cpu *CPU) tick() {
 	if cpu.Cycles == 0 {
-		// cpu.debugVRAM()
+		if cpu.bus.interrupt.IMEDelay = true {
+			cpu.bus.interrupt.IMEDelay = false
+			cpu.bus.interrupt.IME = 0
+		}
 		cpu.Opcode = cpu.bus.read(cpu.PC)
 		cpu.PC++
 		cpu.Cycles = opcodes[cpu.Opcode].Cycles
 		opcodes[cpu.Opcode].Exec(cpu)
-
-		
-		
 	}
 	cpu.Cycles--
 }

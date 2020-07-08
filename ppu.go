@@ -103,13 +103,14 @@ func (ppu *PPU) drawScanLine() {
 			tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
 			
 			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
-		} else {
-			// fmt.Println("8800 addressing")
-			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[uint16(int(startAddr) + 128) + uint16(i) - 0x8000]) * 16) - 0x8000
-			tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
-			
-			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
 		}
+		//  else {
+		// 	// fmt.Println("8800 addressing")
+		// 	start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[uint16(int(startAddr) + 128) + uint16(i) - 0x8000]) * 16) - 0x8000
+		// 	tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
+			
+		// 	ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+		// }
 	}
 }
 // take 2 bytes and add to framebuffer

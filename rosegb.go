@@ -62,6 +62,7 @@ func loop() {
 		g.Label("L: 0x" + strconv.FormatUint(uint64(cpu.L), 16)),
 		g.Label("LCDC: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDC), 16)),
 		g.Label("LCDCSTAT: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDCSTAT), 16)),
+		g.Label("Opcode: 0x" + strconv.FormatUint(uint64(cpu.Opcode), 16)),
 	})
 
 	g.Window("Tile Viewer", 410, 30, 200, 300, g.Layout{
