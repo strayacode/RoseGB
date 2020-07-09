@@ -29,58 +29,58 @@ type PPU struct {
 	DMA byte
 }
 
-func (ppu *PPU) tick() {
-	ppu.Cycles++
-	// fmt.Println(ppu.LCDCSTAT & 0x03)
-	switch ppu.LCDCSTAT & 0x03 {
+func (cpu *CPU) PPUTick() {
+	cpu.bus.ppu.Cycles++
+	switch cpu.bus.ppu.LCDCSTAT & 0x03 {
 		case 0:
 			// HBlank
-			if ppu.Cycles >= 204 {
-				ppu.Cycles = 0
-				ppu.LX = 0
-				ppu.drawScanLine()
-				ppu.LY++
-				if ppu.LY == 144 {
+			if cpu.bus.ppu.Cycles >= 204 {
+				cpu.bus.ppu.Cycles = 0
+				cpu.bus.ppu.LX = 0
+				cpu.bus.ppu.drawScanLine()
+				cpu.bus.ppu.LY++
+				if cpu.bus.ppu.LY == 144 {
 					// execute VBlank
-					ppu.LCDCSTAT |= 0x01
-					ppu.LCDCSTAT &= 0xFD
+					cpu.bus.ppu.LCDCSTAT |= 0x01
+					cpu.bus.ppu.LCDCSTAT &= 0xFD
+					cpu.bus.interrupt.requestVBlank()
 				} else {
 					// execute OAM search (mode 2)
 					
-					ppu.LCDCSTAT |= 0x02
-					ppu.LCDCSTAT &= 0xFE
+					cpu.bus.ppu.LCDCSTAT |= 0x02
+					cpu.bus.ppu.LCDCSTAT &= 0xFE
 					
 				}
 			}
 		case 1:
 			// VBlank
-			if ppu.Cycles >= 4560 {
-				ppu.Cycles = 0
+			if cpu.bus.ppu.Cycles >= 4560 {
+				cpu.bus.ppu.Cycles = 0
 
-				ppu.LY = 0
-				ppu.LX = 0
+				cpu.bus.ppu.LY = 0
+				cpu.bus.ppu.LX = 0
 				// set to mode 2
-				ppu.LCDCSTAT |= 0x02
-				ppu.LCDCSTAT &= 0xFE
+				cpu.bus.ppu.LCDCSTAT |= 0x02
+				cpu.bus.ppu.LCDCSTAT &= 0xFE
 				
 			} // implement as correct interrupt later
 		case 2: 
-			if ppu.Cycles >= 80 {
+			if cpu.bus.ppu.Cycles >= 80 {
 				
-				ppu.Cycles = 0
+				cpu.bus.ppu.Cycles = 0
 				// set to mode 3
-				ppu.LCDCSTAT |= 0x03
-				ppu.cpuVRAMAccess = false
+				cpu.bus.ppu.LCDCSTAT |= 0x03
+				cpu.bus.ppu.cpuVRAMAccess = false
 			}
 		case 3:
 			// read scanline from VRAM and put in framebuffer
 			
-			if ppu.Cycles >= 172 {
+			if cpu.bus.ppu.Cycles >= 172 {
 				
 				// set to mode 0
-				ppu.LCDCSTAT &= 0xFC
-				ppu.Cycles = 0
-				ppu.cpuVRAMAccess = true
+				cpu.bus.ppu.LCDCSTAT &= 0xFC
+				cpu.bus.ppu.Cycles = 0
+				cpu.bus.ppu.cpuVRAMAccess = true
 
 			}
 	}

@@ -92,6 +92,46 @@ func (bus *Bus) readIO(addr uint16) byte {
 		return bus.SB
 	case 0xFF02:
 		return bus.SC
+	case 0xFF10:
+		return bus.apu.NR10 
+	case 0xFF11:
+		return bus.apu.NR11 
+	case 0xFF12:
+		return bus.apu.NR12 
+	case 0xFF13:
+		return bus.apu.NR13 
+	case 0xFF14:
+		return bus.apu.NR14 
+	case 0xFF16:
+		return bus.apu.NR21 
+	case 0xFF17:
+		return bus.apu.NR22 
+	case 0xFF19:
+		return bus.apu.NR24 
+	case 0xFF1A:
+		return bus.apu.NR30 
+	case 0xFF1B:
+		return bus.apu.NR31 
+	case 0xFF1C:
+		return bus.apu.NR32 
+	case 0xFF1D:
+		return bus.apu.NR33
+	case 0xFF1E:
+		return bus.apu.NR34 
+	case 0xFF20:
+		return bus.apu.NR41 
+	case 0xFF21:
+		return bus.apu.NR42 
+	case 0xFF22:
+		return bus.apu.NR43 
+	case 0xFF23:
+		return bus.apu.NR44 
+	case 0xFF24:
+		return bus.apu.NR50 
+	case 0xFF25:
+		return bus.apu.NR51 
+	case 0xFF26:
+		return bus.apu.NR52 
 	case 0xFF40:
 		return bus.ppu.LCDC
 	case 0xFF42:
@@ -150,8 +190,10 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 		bus.apu.NR31 = data
 	case 0xFF1C:
 		bus.apu.NR32 = data
-	case 0xFF1E:
+	case 0xFF1D:
 		bus.apu.NR33 = data
+	case 0xFF1E:
+		bus.apu.NR34 = data
 	case 0xFF20:
 		bus.apu.NR41 = data
 	case 0xFF21:

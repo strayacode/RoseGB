@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"os"
 	"flag"
-	// "fmt"
+	"fmt"
 )
 
 var (
@@ -63,6 +63,7 @@ func loop() {
 		g.Label("LCDC: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDC), 16)),
 		g.Label("LCDCSTAT: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDCSTAT), 16)),
 		g.Label("Opcode: 0x" + strconv.FormatUint(uint64(cpu.Opcode), 16)),
+		g.Label("IME: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IME), 16) + " IF: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IF), 16) + " IE: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IE), 16)),
 	})
 
 	g.Window("Tile Viewer", 410, 30, 200, 300, g.Layout{
@@ -97,10 +98,11 @@ func refresh() {
     		cpu.tick()
     		
     		// cpu.setPCBreakpoint(0x740)
-    		cpu.bus.ppu.tick()
+    		cpu.PPUTick()
     	}
     	cpu.drawTileViewer()
     	cpu.drawFramebuffer()
+    	cpu.checkInput()
     	// cpu.debugVRAM()
         g.Update()
 
@@ -235,5 +237,29 @@ func (cpu *CPU) drawTileViewer() {
 		}	
 	}
 	tileTexture, _ = g.NewTextureFromRgba(img)
+}
+
+func (cpu *CPU) checkInput() {
+	// z, A
+	if g.IsKeyPressed(90) == true && cpu.bus.keypad.getP15() == true {
+		// fmt.Println("A!")
+		cpu.bus.keypad.setA()
+		cpu.bus.interrupt.requestJoypad()
+	}
+	// x, B
+	// g.IsKeyPressed(88)
+	// up, up
+	// fmt.Println(g.IsKeyPressed(38), g.IsKeyPressed(90))
+	if g.IsKeyPressed(38) {
+		fmt.Println("up!")
+		cpu.bus.keypad.setUp()
+		cpu.bus.interrupt.requestJoypad()
+	}
+	// // down, down
+	// g.IsKeyPressed(40)
+	// // left, left
+	// g.IsKeyPressed(37)
+	// // right, right
+	// g.IsKeyPressed(39)
 }
 
