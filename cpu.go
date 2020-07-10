@@ -27,6 +27,7 @@ func (cpu *CPU) tick() {
 			cpu.bus.interrupt.IMEDelay = false
 			cpu.bus.interrupt.IME = 1
 		}
+		
 		cpu.Opcode = cpu.bus.read(cpu.PC)
 		cpu.PC++
 		cpu.Cycles = opcodes[cpu.Opcode].Cycles

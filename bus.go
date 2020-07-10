@@ -156,7 +156,6 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 	case 0xFF00:
 		bus.keypad.P1 = data
 	case 0xFF01:
-		fmt.Println(string(data))
 		bus.SB = data
 	case 0xFF02:
 		bus.SC = data

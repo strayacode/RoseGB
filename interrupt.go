@@ -17,6 +17,7 @@ func (interrupt *Interrupt) requestVBlank() {
 
 func (interrupt *Interrupt) resetVBlank() {
 	interrupt.IF &= 0xFE
+	// fmt.Println(interrupt.IF & 1)
 }
 
 func (interrupt *Interrupt) requestLCDCSTAT() {
@@ -60,6 +61,7 @@ func (interrupt *Interrupt) executeVBlank() {
 	cpu.SP--
 	cpu.bus.write(cpu.SP, lo)
 	cpu.PC = 0x0040
+	// fmt.Println("good")
 }
 
 func (interrupt *Interrupt) executeLCDCSTAT() {
@@ -106,26 +108,13 @@ func (interrupt *Interrupt) executeJoypad() {
 
 
 func (interrupt *Interrupt) handleInterrupts() {
-	potentialInterrupts := interrupt.IE & interrupt.IF & 0x1F // if both bits n in IE and IF are set and are one of the first 5, then we flag it as a potential interrupt
+	
 	// only handle interrupts if IME is set
 	if interrupt.IME == 1 {
 		for i := 0; i < 5; i++ {
 			// check if bit is a potential interrupt
-			if ((1 << i) & potentialInterrupts) >> i == 1 {
+			if ((1 << i) & interrupt.IE) >> i == 1 && ((1 << i) & interrupt.IF) >> i == 1 {
 				// turn off corresponding bit in IF
-				switch i {
-				case 0:
-					interrupt.resetVBlank()
-				case 1:
-					interrupt.resetLCDCSTAT()
-				case 2:
-					interrupt.resetTimer()
-				case 3:
-					interrupt.resetSerial()
-				case 4:
-					interrupt.resetJoypad()
-				}
-				interrupt.IME = 1
 				switch i {
 				case 0:
 					interrupt.executeVBlank()
@@ -138,6 +127,22 @@ func (interrupt *Interrupt) handleInterrupts() {
 				case 4:
 					interrupt.executeJoypad()
 				}
+
+				switch i {
+				case 0:
+					interrupt.resetVBlank()
+				case 1:
+					interrupt.resetLCDCSTAT()
+				case 2:
+					interrupt.resetTimer()
+				case 3:
+					interrupt.resetSerial()
+				case 4:
+					interrupt.resetJoypad()
+				}
+				
+				
+				interrupt.IME = 0
 			}
 		}
 	}

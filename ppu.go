@@ -31,18 +31,25 @@ type PPU struct {
 
 func (cpu *CPU) PPUTick() {
 	cpu.bus.ppu.Cycles++
+	if cpu.bus.ppu.LYC == cpu.bus.ppu.LY {
+		cpu.bus.ppu.setLYCInterrupt()
+		cpu.bus.interrupt.requestLCDCSTAT()
+	}
 	switch cpu.bus.ppu.LCDCSTAT & 0x03 {
 		case 0:
 			// HBlank
 			if cpu.bus.ppu.Cycles >= 204 {
 				cpu.bus.ppu.Cycles = 0
 				cpu.bus.ppu.LX = 0
+				cpu.bus.ppu.setHBlankInterrupt()
+				cpu.bus.interrupt.requestLCDCSTAT()
 				cpu.bus.ppu.drawScanLine()
 				cpu.bus.ppu.LY++
 				if cpu.bus.ppu.LY == 144 {
 					// execute VBlank
 					cpu.bus.ppu.LCDCSTAT |= 0x01
 					cpu.bus.ppu.LCDCSTAT &= 0xFD
+					cpu.bus.ppu.setVBlankInterrupt()
 					cpu.bus.interrupt.requestVBlank()
 				} else {
 					// execute OAM search (mode 2)
@@ -91,9 +98,8 @@ func (cpu *CPU) PPUTick() {
 // trying to draw line by line
 func (ppu *PPU) drawScanLine() {
 	
-	
-	tileY := math.Floor(float64(int(ppu.LY) + int(ppu.SCY)) / 8)
-	tileX := math.Floor(float64(int(ppu.SCX) + int(ppu.LX) / 8))
+	tileY := math.Floor(float64(ppu.LY + ppu.SCY) / 8)
+	tileX := math.Floor(float64(ppu.SCX + ppu.LX) / 8)
 	
 	startAddr := ppu.getBGMapAddr() + uint16(tileY * 32) + uint16(tileX)
 	// iterate through tiles in a scanline
@@ -103,14 +109,12 @@ func (ppu *PPU) drawScanLine() {
 			tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
 			
 			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
-		}
-		//  else {
-		// 	// fmt.Println("8800 addressing")
-		// 	start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[uint16(int(startAddr) + 128) + uint16(i) - 0x8000]) * 16) - 0x8000
-		// 	tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
+		} else {
+			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[uint16(int(startAddr) + 128) + uint16(i) - 0x8000]) * 16) - 0x8000
+			tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
 			
-		// 	ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
-		// }
+			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+		}
 	}
 }
 // take 2 bytes and add to framebuffer
@@ -149,4 +153,16 @@ func (ppu *PPU) writeDump(data string) {
 	if _, err = f.WriteString(data); err != nil {
 	    panic(err)
 	}
+}
+
+func (ppu *PPU) setLYCInterrupt() {
+	ppu.LCDCSTAT |= (1 << 6)
+}
+
+func (ppu *PPU) setVBlankInterrupt() {
+	ppu.LCDCSTAT |= (1 << 4)
+}
+
+func (ppu *PPU) setHBlankInterrupt() {
+	ppu.LCDCSTAT |= (1 << 3)
 }

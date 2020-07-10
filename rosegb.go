@@ -92,26 +92,18 @@ func checkBootromSkip() bool {
 
 func refresh() {
     ticker := time.NewTicker(time.Second / 60)
-
     for {
     	for i := 0; i < 17556; i++ {
     		cpu.tick()
-    		
-    		// cpu.setPCBreakpoint(0x740)
     		cpu.PPUTick()
     	}
     	cpu.drawTileViewer()
     	cpu.drawFramebuffer()
     	cpu.checkInput()
-    	// cpu.debugVRAM()
         g.Update()
-
         <-ticker.C
-    }
-   
+    } 
 }
-
-
 
 func (cpu *CPU) skipBootROM() {
 	cpu.A = 0x01
