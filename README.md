@@ -1,7 +1,7 @@
 # RoseGB
 reformed gameboy emulator in golang with revised structure
 
-Test Pass Checklist:
+**Test Pass Checklist:**
 - [ ] 01-special.gb
 - [ ] 02-interrupts.gb
 - [ ] 03-op sp, hl.gb
@@ -14,5 +14,8 @@ Test Pass Checklist:
 - [ ] 10-bit ops.gb
 - [ ] 11-op a, (hl).gb
 
-TODO:
+**TODO:**
 - [ ] Interrupts
+
+**Usage:**
+to compile RoseGB in the terminal type ```go build rosegb.go apu.go bus.go cartridge.go cpu.go debug.go interrupt.go opcodes.go ppu.go timer.go keypad.go``` and use ./rosegb path-to-file to run
