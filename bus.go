@@ -92,6 +92,8 @@ func (bus *Bus) readIO(addr uint16) byte {
 		return bus.SB
 	case 0xFF02:
 		return bus.SC
+	case 0xFF0F:
+		return bus.interrupt.IF
 	case 0xFF10:
 		return bus.apu.NR10 
 	case 0xFF11:
@@ -157,6 +159,7 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 		bus.keypad.P1 = data
 	case 0xFF01:
 		bus.SB = data
+		fmt.Println(string(data))
 	case 0xFF02:
 		bus.SC = data
 	case 0xFF05:

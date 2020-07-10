@@ -3250,11 +3250,247 @@ func cbop_0x1D(cpu *CPU) {
 	cpu.HFlag(0)
 }
 
+// RR (HL) 
+func cbop_0x1E(cpu *CPU) {
+	tempcarry := cpu.getCFlag()
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	cpu.CFlag(result & 0x1)
+	result = (tempcarry << 7 | result >> 1)
+	if result == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
 // RR A 
 func cbop_0x1F(cpu *CPU) {
 	tempcarry := cpu.getCFlag()
 	cpu.CFlag(cpu.A & 0x1)
 	cpu.A = (tempcarry << 7 | cpu.A >> 1)
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SLA B
+func cbop_0x20(cpu *CPU) {
+	cpu.CFlag((cpu.B & (1 << 7) >> 7))
+	cpu.B <<= 1
+	if cpu.B == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SLA C
+func cbop_0x21(cpu *CPU) {
+	cpu.CFlag((cpu.C & (1 << 7) >> 7))
+	cpu.C <<= 1
+	if cpu.C == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SLA D
+func cbop_0x22(cpu *CPU) {
+	cpu.CFlag((cpu.D & (1 << 7) >> 7))
+	cpu.D <<= 1
+	if cpu.D == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SLA E
+func cbop_0x23(cpu *CPU) {
+	cpu.CFlag((cpu.E & (1 << 7) >> 7))
+	cpu.E <<= 1
+	if cpu.E == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SLA H
+func cbop_0x24(cpu *CPU) {
+	cpu.CFlag((cpu.H & (1 << 7) >> 7))
+	cpu.H <<= 1
+	if cpu.H == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SLA L
+func cbop_0x25(cpu *CPU) {
+	cpu.CFlag((cpu.L & (1 << 7) >> 7))
+	cpu.L <<= 1
+	if cpu.L == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SLA (HL)
+func cbop_0x26(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	cpu.CFlag((result & (1 << 7) >> 7))
+	result <<= 1
+	if result == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// SLA A
+func cbop_0x27(cpu *CPU) {
+	cpu.CFlag((cpu.A & (1 << 7) >> 7))
+	cpu.A <<= 1
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRA B
+func cbop_0x28(cpu *CPU) {
+	bit7 := cpu.B >> 7
+	cpu.CFlag(cpu.B & 0x1)
+	cpu.B = (bit7 << 7 | cpu.B >> 1)
+	if cpu.B == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRA C
+func cbop_0x29(cpu *CPU) {
+	bit7 := cpu.C >> 7
+	cpu.CFlag(cpu.C & 0x1)
+	cpu.C = (bit7 << 7 | cpu.C >> 1)
+	if cpu.C == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRA D
+func cbop_0x2A(cpu *CPU) {
+	bit7 := cpu.D >> 7
+	cpu.CFlag(cpu.D & 0x1)
+	cpu.D = (bit7 << 7 | cpu.D >> 1)
+	if cpu.D == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRA E
+func cbop_0x2B(cpu *CPU) {
+	bit7 := cpu.E >> 7
+	cpu.CFlag(cpu.E & 0x1)
+	cpu.E = (bit7 << 7 | cpu.E >> 1)
+	if cpu.E == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRA H
+func cbop_0x2C(cpu *CPU) {
+	bit7 := cpu.H >> 7
+	cpu.CFlag(cpu.H & 0x1)
+	cpu.H = (bit7 << 7 | cpu.H >> 1)
+	if cpu.H == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRA L
+func cbop_0x2D(cpu *CPU) {
+	bit7 := cpu.L >> 7
+	cpu.CFlag(cpu.L & 0x1)
+	cpu.L = (bit7 << 7 | cpu.L >> 1)
+	if cpu.L == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRA (HL)
+func cbop_0x2E(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	bit7 := result >> 7
+	cpu.CFlag(result & 0x1)
+	result = (bit7 << 7 | result >> 1)
+	if result == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// SRA A
+func cbop_0x2F(cpu *CPU) {
+	bit7 := cpu.A >> 7
+	cpu.CFlag(cpu.A & 0x1)
+	cpu.A = (bit7 << 7 | cpu.A >> 1)
 	if cpu.A == 0 {
 		cpu.ZFlag(1)
 	} else {
@@ -3279,6 +3515,23 @@ func cbop_0x37(cpu *CPU) {
 	cpu.CFlag(0)
 }
 
+// SWAP (HL)
+func cbop_0x36(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	hi := result >> 4
+	lo := result & 0xFF
+	result = (lo << 4 | hi)
+	if result == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.CFlag(0)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
 // SRL B 
 func cbop_0x38(cpu *CPU) {
 	cpu.CFlag(cpu.B & 0x1)
@@ -3290,6 +3543,21 @@ func cbop_0x38(cpu *CPU) {
 	}
 	cpu.NFlag(0)
 	cpu.HFlag(0)
+}
+
+// SRL (HL)
+func cbop_0x3E(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	cpu.CFlag(result & 0x1)
+	result >>= 1
+	if result == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
 }
 
 // SRL A 
@@ -3377,6 +3645,20 @@ func cbop_0x45(cpu *CPU) {
 	cpu.HFlag(1)
 }
 
+// BIT 0, (HL)
+func cbop_0x46(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	bit := result & 1
+	if bit == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(1)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
 // BIT 0, A
 func cbop_0x47(cpu *CPU) {
 	bit := cpu.A & 1
@@ -3461,6 +3743,20 @@ func cbop_0x4D(cpu *CPU) {
 	cpu.HFlag(1)
 }
 
+// BIT 1, (HL)
+func cbop_0x4E(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	bit := result & (1 << 1)
+	if bit == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(1)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
 // BIT 1, A
 func cbop_0x4F(cpu *CPU) {
 	bit := (cpu.A & (1 << 1)) >> 1
@@ -3485,6 +3781,20 @@ func cbop_0x50(cpu *CPU) {
 	cpu.HFlag(1)
 }
 
+// BIT 2, (HL)
+func cbop_0x56(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	bit := result & (1 << 2)
+	if bit == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(1)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
 // BIT 3, B
 func cbop_0x58(cpu *CPU) {
 	bit := (cpu.B & (1 << 3)) >> 3
@@ -3495,6 +3805,20 @@ func cbop_0x58(cpu *CPU) {
 	}
 	cpu.NFlag(0)
 	cpu.HFlag(1)
+}
+
+// BIT 3, (HL)
+func cbop_0x5E(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	bit := result & (1 << 3)
+	if bit == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(1)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
 }
 
 // BIT 4, B
@@ -3509,6 +3833,20 @@ func cbop_0x60(cpu *CPU) {
 	cpu.HFlag(1)
 }
 
+// BIT 4, (HL)
+func cbop_0x66(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	bit := result & (1 << 4)
+	if bit == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(1)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
 // BIT 5, B
 func cbop_0x68(cpu *CPU) {
 	bit := (cpu.B & (1 << 5)) >> 5
@@ -3521,6 +3859,20 @@ func cbop_0x68(cpu *CPU) {
 	cpu.HFlag(1)
 }
 
+// BIT 5, (HL)
+func cbop_0x6E(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	bit := result & (1 << 5)
+	if bit == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(1)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
 // BIT 6, B
 func cbop_0x70(cpu *CPU) {
 	bit := (cpu.B & (1 << 6)) >> 6
@@ -3531,6 +3883,20 @@ func cbop_0x70(cpu *CPU) {
 	}
 	cpu.NFlag(0)
 	cpu.HFlag(1)
+}
+
+// BIT 6, (HL)
+func cbop_0x76(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	bit := result & (1 << 6)
+	if bit == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(1)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
 }
 
 // BIT 7, B
@@ -3586,6 +3952,55 @@ func cbop_0x80(cpu *CPU) {
 	cpu.B &= 0xFE
 }
 
+// RES 0, (HL)
+func cbop_0x86(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result &= 0xFE
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// RES 1, (HL)
+func cbop_0x8E(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result &= 0xFD
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// RES 2, (HL)
+func cbop_0x96(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result &= 0xFB
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// RES 3, (HL)
+func cbop_0x9E(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result &= 0xF7
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// RES 4, (HL)
+func cbop_0xA6(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result &= 0xEF
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// RES 5, (HL)
+func cbop_0xAE(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result &= 0xDF
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// RES 6, (HL)
+func cbop_0xB6(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result &= 0xBF
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
 // RES 7, (HL)
 func cbop_0xBE(cpu *CPU) {
 	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
@@ -3598,6 +4013,61 @@ func cbop_0xC5(cpu *CPU) {
 	cpu.L |= 1
 }
 
+// SET 0, (HL)
+func cbop_0xC6(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result |= 1
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// SET 1, (HL)
+func cbop_0xCE(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result |= (1 << 1)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// SET 2, (HL)
+func cbop_0xD6(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result |= (1 << 2)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// SET 3, (HL)
+func cbop_0xDE(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result |= (1 << 3)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// SET 4, (HL)
+func cbop_0xE6(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result |= (1 << 4)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// SET 5, (HL)
+func cbop_0xEE(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result |= (1 << 5)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// SET 6, (HL)
+func cbop_0xF6(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result |= (1 << 6)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
+
+// SET 7, (HL)
+func cbop_0xFE(cpu *CPU) {
+	result := cpu.bus.read(uint16(cpu.H) << 8 | uint16(cpu.L))
+	result |= (1 << 7)
+	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
+}
 var opcodes [256]Opcode = [256]Opcode {
 	Opcode{4, op_0x00}, Opcode{12, op_0x01}, Opcode{8, op_0x02}, Opcode{8, op_0x03}, Opcode{4, op_0x04}, Opcode{4, op_0x05}, Opcode{8, op_0x06}, Opcode{4, op_0x07}, Opcode{20, op_0x08}, Opcode{8, op_0x09}, Opcode{8, op_0x0A}, Opcode{8, op_0x0B}, Opcode{4, op_0x0C}, Opcode{4, op_0x0D}, Opcode{8, op_0x0E}, Opcode{4, op_0x0F},
 	Opcode{4, op_null}, Opcode{12, op_0x11}, Opcode{8, op_0x12}, Opcode{8, op_0x13}, Opcode{4, op_0x14}, Opcode{4, op_0x15}, Opcode{8, op_0x16}, Opcode{4, op_0x17}, Opcode{12, op_0x18}, Opcode{8, op_0x19}, Opcode{8, op_0x1A}, Opcode{8, op_0x1B}, Opcode{4, op_0x1C}, Opcode{4, op_0x1D}, Opcode{8, op_0x1E}, Opcode{4, op_0x1F},
@@ -3620,20 +4090,20 @@ var opcodes [256]Opcode = [256]Opcode {
 
 var cbopcodes [256]Opcode = [256]Opcode {
 	Opcode{8, cbop_0x00}, Opcode{8, cbop_0x01}, Opcode{8, cbop_0x02}, Opcode{8, cbop_0x03}, Opcode{8, cbop_0x04}, Opcode{8, cbop_0x05}, Opcode{16, cbop_0x06}, Opcode{8, cbop_0x07}, Opcode{8, cbop_0x08}, Opcode{8, cbop_0x09}, Opcode{8, cbop_0x0A}, Opcode{8, cbop_0x0B}, Opcode{8, cbop_0x0C}, Opcode{8, cbop_0x0D}, Opcode{16, cbop_0x0E}, Opcode{8, cbop_0x0F},
-	Opcode{8, cbop_0x10}, Opcode{8, cbop_0x11}, Opcode{8, cbop_0x12}, Opcode{8, cbop_0x13}, Opcode{8, cbop_0x14}, Opcode{8, cbop_0x15}, Opcode{16, cbop_0x16}, Opcode{8, cbop_0x17}, Opcode{8, cbop_0x18}, Opcode{8, cbop_0x19}, Opcode{8, cbop_0x1A}, Opcode{8, cbop_0x1B}, Opcode{8, cbop_0x1C}, Opcode{8, cbop_0x1D}, Opcode{16, cbop_null}, Opcode{8, cbop_0x1F},
-	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
-	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_0x37}, Opcode{8, cbop_0x38}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_0x3F},
-	Opcode{8, cbop_0x40}, Opcode{8, cbop_0x41}, Opcode{8, cbop_0x42}, Opcode{8, cbop_0x43}, Opcode{8, cbop_0x44}, Opcode{8, cbop_0x45}, Opcode{12, cbop_null}, Opcode{8, cbop_0x47}, Opcode{8, cbop_0x48}, Opcode{8, cbop_0x49}, Opcode{8, cbop_0x4A}, Opcode{8, cbop_0x4B}, Opcode{8, cbop_0x4C}, Opcode{8, cbop_0x4D}, Opcode{12, cbop_null}, Opcode{8, cbop_0x4F},
-	Opcode{8, cbop_0x50}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_0x58}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null},
-	Opcode{8, cbop_0x60}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_0x68}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null},
-	Opcode{8, cbop_0x70}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_0x78}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_0x7C}, Opcode{8, cbop_null}, Opcode{12, cbop_0x7E}, Opcode{8, cbop_0x7F},
-	Opcode{8, cbop_0x80}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
-	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
-	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
-	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xBE}, Opcode{8, cbop_null},
-	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_0xC5}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
-	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
-	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
-	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_null}, Opcode{8, cbop_null},
+	Opcode{8, cbop_0x10}, Opcode{8, cbop_0x11}, Opcode{8, cbop_0x12}, Opcode{8, cbop_0x13}, Opcode{8, cbop_0x14}, Opcode{8, cbop_0x15}, Opcode{16, cbop_0x16}, Opcode{8, cbop_0x17}, Opcode{8, cbop_0x18}, Opcode{8, cbop_0x19}, Opcode{8, cbop_0x1A}, Opcode{8, cbop_0x1B}, Opcode{8, cbop_0x1C}, Opcode{8, cbop_0x1D}, Opcode{16, cbop_0x1E}, Opcode{8, cbop_0x1F},
+	Opcode{8, cbop_0x20}, Opcode{8, cbop_0x21}, Opcode{8, cbop_0x22}, Opcode{8, cbop_0x23}, Opcode{8, cbop_0x24}, Opcode{8, cbop_0x25}, Opcode{16, cbop_0x26}, Opcode{8, cbop_0x27}, Opcode{8, cbop_0x28}, Opcode{8, cbop_0x29}, Opcode{8, cbop_0x2A}, Opcode{8, cbop_0x2B}, Opcode{8, cbop_0x2C}, Opcode{8, cbop_0x2D}, Opcode{16, cbop_0x2E}, Opcode{8, cbop_0x2F},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0x36}, Opcode{8, cbop_0x37}, Opcode{8, cbop_0x38}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0x3E}, Opcode{8, cbop_0x3F},
+	Opcode{8, cbop_0x40}, Opcode{8, cbop_0x41}, Opcode{8, cbop_0x42}, Opcode{8, cbop_0x43}, Opcode{8, cbop_0x44}, Opcode{8, cbop_0x45}, Opcode{12, cbop_0x46}, Opcode{8, cbop_0x47}, Opcode{8, cbop_0x48}, Opcode{8, cbop_0x49}, Opcode{8, cbop_0x4A}, Opcode{8, cbop_0x4B}, Opcode{8, cbop_0x4C}, Opcode{8, cbop_0x4D}, Opcode{12, cbop_0x4E}, Opcode{8, cbop_0x4F},
+	Opcode{8, cbop_0x50}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_0x56}, Opcode{8, cbop_null}, Opcode{8, cbop_0x58}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_0x5E}, Opcode{8, cbop_null},
+	Opcode{8, cbop_0x60}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_0x66}, Opcode{8, cbop_null}, Opcode{8, cbop_0x68}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_0x6E}, Opcode{8, cbop_null},
+	Opcode{8, cbop_0x70}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{12, cbop_0x76}, Opcode{8, cbop_null}, Opcode{8, cbop_0x78}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_0x7C}, Opcode{8, cbop_null}, Opcode{12, cbop_0x7E}, Opcode{8, cbop_0x7F},
+	Opcode{8, cbop_0x80}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0x86}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0x8E}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0x96}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0x9E}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xA6}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xAE}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xB6}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xBE}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_0xC5}, Opcode{16, cbop_0xC6}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xCE}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xD6}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xDE}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xE6}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xEE}, Opcode{8, cbop_null},
+	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xF6}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0xFE}, Opcode{8, cbop_null},
 
 }
