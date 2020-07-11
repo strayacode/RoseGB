@@ -16,6 +16,9 @@ reformed gameboy emulator in golang with revised structure
 
 **TODO:**
 - [x] Interrupts
+- [ ] Timers
+- [ ] More interactive VRAM viewer
+- [ ] play/pause/step functionality
 
 **Usage:**
 
