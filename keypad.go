@@ -41,5 +41,8 @@ func (keypad *Keypad) setA() {
 	keypad.P1 &= 0xFE
 }
 
+func (keypad *Keypad) setB() {
+	keypad.P1 &= 0xFD
+}
 
 

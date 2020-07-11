@@ -51,7 +51,7 @@ func loop() {
 			}
 		}),
 	})
-	g.Window("Debugger", 200, 30, 200, 300, g.Layout{
+	g.Window("Debugger", 200, 30, 300, 300, g.Layout{
 		g.Label("A: 0x" + strconv.FormatUint(uint64(cpu.A), 16)),
 		g.Label("B: 0x" + strconv.FormatUint(uint64(cpu.B), 16)),
 		g.Label("C: 0x" + strconv.FormatUint(uint64(cpu.C), 16)),
@@ -64,9 +64,10 @@ func loop() {
 		g.Label("LCDCSTAT: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDCSTAT), 16)),
 		g.Label("Opcode: 0x" + strconv.FormatUint(uint64(cpu.Opcode), 16)),
 		g.Label("IME: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IME), 16) + " IF: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IF), 16) + " IE: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IE), 16)),
+		g.Label("DIV: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.DIV), 16) + " TIMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TIMA), 16) + " TMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TMA), 16) + " TAC: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TAC), 16)),
 	})
 
-	g.Window("Tile Viewer", 410, 30, 200, 300, g.Layout{
+	g.Window("Tile Viewer", 510, 30, 200, 300, g.Layout{
 		g.Custom(func() {
 			canvas := g.GetCanvas()
 			pos := g.GetCursorScreenPos()
@@ -96,11 +97,16 @@ func refresh() {
     	for i := 0; i < 17556; i++ {
     		cpu.tick()
     		cpu.PPUTick()
+    		cpu.bus.timer.tick()
+    		if cpu.bus.timer.timerInterrupt == true {
+    			cpu.bus.interrupt.requestTimer()
+    			cpu.bus.timer.timerInterrupt = false
+    		}
+    		cpu.bus.interrupt.handleInterrupts()
     	}
     	cpu.drawTileViewer()
     	cpu.drawFramebuffer()
     	cpu.checkInput()
-    	// fmt.Println(cpu.bus.read(cpu.PC + 1))
         g.Update()
         <-ticker.C
     } 
@@ -238,7 +244,15 @@ func (cpu *CPU) checkInput() {
 		// fmt.Println("A!")
 		cpu.bus.keypad.setA()
 		cpu.bus.interrupt.requestJoypad()
+	} else if g.IsKeyPressed(88) == true && cpu.bus.keypad.getP15() == true {
+		fmt.Println("B!")
+		cpu.bus.keypad.setB()
+		cpu.bus.interrupt.requestJoypad()
 	}
+
+	
+
+
 	// x, B
 	// g.IsKeyPressed(88)
 	// up, up

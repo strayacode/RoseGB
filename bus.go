@@ -164,9 +164,10 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 		bus.keypad.P1 = data
 	case 0xFF01:
 		bus.SB = data
-		fmt.Println(string(data))
 	case 0xFF02:
 		bus.SC = data
+	case 0xFF04:
+		bus.timer.DIV = 0
 	case 0xFF05:
 		bus.timer.TIMA = data
 	case 0xFF06:

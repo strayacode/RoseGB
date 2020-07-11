@@ -2677,18 +2677,18 @@ func op_0xE7(cpu *CPU) {
 
 // ADD SP, i8
 func op_0xE8(cpu *CPU) {
-	i8 := int8(cpu.bus.read(cpu.PC) + 1)
-	if ((uint32(cpu.SP) & 0xF) + (uint32(i8) & 0xF)) & 0x10 == 0x10 {
+	i8 := int8(cpu.bus.read(cpu.PC))
+	if (((cpu.SP) & 0xF) + (uint16(i8) & 0xF)) >= 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
 	}
-	if byte(i8) + byte(cpu.SP) > 0xFF {
+	if (uint16(i8) & 0xFF) + (cpu.SP & 0xFF) > 0xFF {
 		cpu.CFlag(1)
 	} else {
 		cpu.CFlag(0)
 	}
-	cpu.SP = uint16(int32(cpu.SP) + int32(i8))
+	cpu.SP += uint16(i8)
 	cpu.ZFlag(0)
 	cpu.NFlag(0)
 	cpu.PC++
@@ -2790,16 +2790,36 @@ func op_0xF7(cpu *CPU) {
 	cpu.PC = 0x0030
 }
 
+// // ADD SP, i8
+// func op_0xE8(cpu *CPU) {
+// 	i8 := int8(cpu.bus.read(cpu.PC))
+// 	if (((cpu.SP) & 0xF) + (uint16(i8) & 0xF)) >= 0x10 {
+// 		cpu.HFlag(1)
+// 	} else {
+// 		cpu.HFlag(0)
+// 	}
+// 	if (uint16(i8) & 0xFF) + (cpu.SP & 0xFF) > 0xFF {
+// 		cpu.CFlag(1)
+// 	} else {
+// 		cpu.CFlag(0)
+// 	}
+// 	cpu.SP += uint16(i8)
+// 	cpu.ZFlag(0)
+// 	cpu.NFlag(0)
+// 	cpu.PC++
+
+// }
+
 // LD HL, SP + i8
 func op_0xF8(cpu *CPU) {
-	i8 := int8(cpu.bus.read(cpu.PC) + 1)
+	i8 := int8(cpu.bus.read(cpu.PC))
 	result := uint16(cpu.SP) + uint16(i8)
-	if ((cpu.SP & 0xF) + ((uint16(i8)) & 0xF)) & 0x10 == 0x10 {
+	if ((cpu.SP & 0xF) + ((uint16(i8)) & 0xF)) >= 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
 	}
-	if cpu.SP & 0xF + uint16(i8) & 0xF > 0xFF {
+	if (uint16(i8) & 0xFF) + (cpu.SP & 0xFF) > 0xFF {
 		cpu.CFlag(1)
 	} else {
 		cpu.CFlag(0)

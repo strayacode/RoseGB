@@ -33,6 +33,7 @@ func (cpu *CPU) tick() {
 			cpu.Opcode = cpu.bus.read(cpu.PC)
 			cpu.PC++
 			cpu.Cycles = opcodes[cpu.Opcode].Cycles
+			cpu.bus.timer.elaspedCycles += opcodes[cpu.Opcode].Cycles
 			opcodes[cpu.Opcode].Exec(cpu)
 		}
 			
@@ -45,7 +46,6 @@ func (cpu *CPU) tick() {
 			}
 		}
 	}
-	cpu.bus.interrupt.handleInterrupts()
 	cpu.Cycles--
 }
 
