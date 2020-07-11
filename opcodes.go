@@ -3505,12 +3505,87 @@ func cbop_0x2F(cpu *CPU) {
 	cpu.HFlag(0)
 }
 
-// SWAP A
-func cbop_0x37(cpu *CPU) {
-	hi := cpu.A >> 4
-	lo := cpu.A & 0xFF
-	cpu.A = (lo << 4 | hi)
-	if cpu.A == 0 {
+// SWAP B
+func cbop_0x30(cpu *CPU) {
+	hi := cpu.B >> 4
+	lo := cpu.B & 0xFF
+	cpu.B = (lo << 4 | hi)
+	if cpu.B == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.CFlag(0)
+}
+
+// SWAP C
+func cbop_0x31(cpu *CPU) {
+	hi := cpu.C >> 4
+	lo := cpu.C & 0xFF
+	cpu.C = (lo << 4 | hi)
+	if cpu.C == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.CFlag(0)
+}
+
+// SWAP D
+func cbop_0x32(cpu *CPU) {
+	hi := cpu.D >> 4
+	lo := cpu.D & 0xFF
+	cpu.D = (lo << 4 | hi)
+	if cpu.D == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.CFlag(0)
+}
+
+// SWAP E
+func cbop_0x33(cpu *CPU) {
+	hi := cpu.E >> 4
+	lo := cpu.E & 0xFF
+	cpu.E = (lo << 4 | hi)
+	if cpu.E == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.CFlag(0)
+}
+
+// SWAP H
+func cbop_0x34(cpu *CPU) {
+	hi := cpu.H >> 4
+	lo := cpu.H & 0xFF
+	cpu.H = (lo << 4 | hi)
+	if cpu.H == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.CFlag(0)
+}
+
+// SWAP L
+func cbop_0x35(cpu *CPU) {
+	hi := cpu.L >> 4
+	lo := cpu.L & 0xFF
+	cpu.L = (lo << 4 | hi)
+	if cpu.L == 0 {
 		cpu.ZFlag(1)
 	} else {
 		cpu.ZFlag(0)
@@ -3537,11 +3612,91 @@ func cbop_0x36(cpu *CPU) {
 	cpu.bus.write(uint16(cpu.H) << 8 | uint16(cpu.L), result)
 }
 
+// SWAP A
+func cbop_0x37(cpu *CPU) {
+	hi := cpu.A >> 4
+	lo := cpu.A & 0xFF
+	cpu.A = (lo << 4 | hi)
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+	cpu.CFlag(0)
+}
+
 // SRL B 
 func cbop_0x38(cpu *CPU) {
 	cpu.CFlag(cpu.B & 0x1)
 	cpu.B >>= 1
 	if cpu.B == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRL C
+func cbop_0x39(cpu *CPU) {
+	cpu.CFlag(cpu.C & 0x1)
+	cpu.C >>= 1
+	if cpu.C == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRL D
+func cbop_0x3A(cpu *CPU) {
+	cpu.CFlag(cpu.D & 0x1)
+	cpu.D >>= 1
+	if cpu.D == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRL E
+func cbop_0x3B(cpu *CPU) {
+	cpu.CFlag(cpu.E & 0x1)
+	cpu.E >>= 1
+	if cpu.E == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRL H
+func cbop_0x3C(cpu *CPU) {
+	cpu.CFlag(cpu.H & 0x1)
+	cpu.H >>= 1
+	if cpu.H == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.NFlag(0)
+	cpu.HFlag(0)
+}
+
+// SRL L
+func cbop_0x3D(cpu *CPU) {
+	cpu.CFlag(cpu.L & 0x1)
+	cpu.L >>= 1
+	if cpu.L == 0 {
 		cpu.ZFlag(1)
 	} else {
 		cpu.ZFlag(0)
@@ -5055,7 +5210,7 @@ var cbopcodes [256]Opcode = [256]Opcode {
 	Opcode{8, cbop_0x00}, Opcode{8, cbop_0x01}, Opcode{8, cbop_0x02}, Opcode{8, cbop_0x03}, Opcode{8, cbop_0x04}, Opcode{8, cbop_0x05}, Opcode{16, cbop_0x06}, Opcode{8, cbop_0x07}, Opcode{8, cbop_0x08}, Opcode{8, cbop_0x09}, Opcode{8, cbop_0x0A}, Opcode{8, cbop_0x0B}, Opcode{8, cbop_0x0C}, Opcode{8, cbop_0x0D}, Opcode{16, cbop_0x0E}, Opcode{8, cbop_0x0F},
 	Opcode{8, cbop_0x10}, Opcode{8, cbop_0x11}, Opcode{8, cbop_0x12}, Opcode{8, cbop_0x13}, Opcode{8, cbop_0x14}, Opcode{8, cbop_0x15}, Opcode{16, cbop_0x16}, Opcode{8, cbop_0x17}, Opcode{8, cbop_0x18}, Opcode{8, cbop_0x19}, Opcode{8, cbop_0x1A}, Opcode{8, cbop_0x1B}, Opcode{8, cbop_0x1C}, Opcode{8, cbop_0x1D}, Opcode{16, cbop_0x1E}, Opcode{8, cbop_0x1F},
 	Opcode{8, cbop_0x20}, Opcode{8, cbop_0x21}, Opcode{8, cbop_0x22}, Opcode{8, cbop_0x23}, Opcode{8, cbop_0x24}, Opcode{8, cbop_0x25}, Opcode{16, cbop_0x26}, Opcode{8, cbop_0x27}, Opcode{8, cbop_0x28}, Opcode{8, cbop_0x29}, Opcode{8, cbop_0x2A}, Opcode{8, cbop_0x2B}, Opcode{8, cbop_0x2C}, Opcode{8, cbop_0x2D}, Opcode{16, cbop_0x2E}, Opcode{8, cbop_0x2F},
-	Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0x36}, Opcode{8, cbop_0x37}, Opcode{8, cbop_0x38}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{8, cbop_null}, Opcode{16, cbop_0x3E}, Opcode{8, cbop_0x3F},
+	Opcode{8, cbop_0x30}, Opcode{8, cbop_0x31}, Opcode{8, cbop_0x32}, Opcode{8, cbop_0x33}, Opcode{8, cbop_0x34}, Opcode{8, cbop_0x35}, Opcode{16, cbop_0x36}, Opcode{8, cbop_0x37}, Opcode{8, cbop_0x38}, Opcode{8, cbop_0x39}, Opcode{8, cbop_0x3A}, Opcode{8, cbop_0x3B}, Opcode{8, cbop_0x3C}, Opcode{8, cbop_0x3D}, Opcode{16, cbop_0x3E}, Opcode{8, cbop_0x3F},
 	Opcode{8, cbop_0x40}, Opcode{8, cbop_0x41}, Opcode{8, cbop_0x42}, Opcode{8, cbop_0x43}, Opcode{8, cbop_0x44}, Opcode{8, cbop_0x45}, Opcode{12, cbop_0x46}, Opcode{8, cbop_0x47}, Opcode{8, cbop_0x48}, Opcode{8, cbop_0x49}, Opcode{8, cbop_0x4A}, Opcode{8, cbop_0x4B}, Opcode{8, cbop_0x4C}, Opcode{8, cbop_0x4D}, Opcode{12, cbop_0x4E}, Opcode{8, cbop_0x4F},
 	Opcode{8, cbop_0x50}, Opcode{8, cbop_0x51}, Opcode{8, cbop_0x52}, Opcode{8, cbop_0x53}, Opcode{8, cbop_0x54}, Opcode{8, cbop_0x55}, Opcode{12, cbop_0x56}, Opcode{8, cbop_0x57}, Opcode{8, cbop_0x58}, Opcode{8, cbop_0x59}, Opcode{8, cbop_0x5A}, Opcode{8, cbop_0x5B}, Opcode{8, cbop_0x5C}, Opcode{8, cbop_0x5D}, Opcode{12, cbop_0x5E}, Opcode{8, cbop_0x5F},
 	Opcode{8, cbop_0x60}, Opcode{8, cbop_0x61}, Opcode{8, cbop_0x62}, Opcode{8, cbop_0x63}, Opcode{8, cbop_0x64}, Opcode{8, cbop_0x65}, Opcode{12, cbop_0x66}, Opcode{8, cbop_0x67}, Opcode{8, cbop_0x68}, Opcode{8, cbop_0x69}, Opcode{8, cbop_0x6A}, Opcode{8, cbop_0x6B}, Opcode{8, cbop_0x6C}, Opcode{8, cbop_0x6D}, Opcode{12, cbop_0x6E}, Opcode{8, cbop_0x6F},
