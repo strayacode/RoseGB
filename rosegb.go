@@ -16,6 +16,7 @@ var (
 	lowRight = image.Point{160, 144}
 	texture *g.Texture
 	tileTexture *g.Texture
+	cycles = 17556
 	cpu = CPU{}
 )
 
@@ -28,7 +29,7 @@ func main() {
 	}
 	title := "RoseGB - " + string(cpu.bus.cartridge.header.title[:])
 	wnd := g.NewMasterWindow(title, 1000, 500, g.MasterWindowFlagsNotResizable, nil)
-
+	cpu.bus.keypad.P1 = 0xFF
     go refresh()
 
     wnd.Main(loop)
@@ -37,8 +38,20 @@ func main() {
 func loop() {
 	g.MainMenuBar(g.Layout{
 		g.Menu("File", g.Layout{
+			// g.MenuItem("Reset", reset),
 			g.MenuItem("Exit", exit),
+			
 		}),
+		g.Menu("Options", g.Layout {
+						g.Menu("Emulation Speed", g.Layout {
+						g.MenuItem("1/2x", func() {cycles = 8778}),
+						g.MenuItem("1x", func() {cycles = 17556}),
+						g.MenuItem("2x", func() {cycles = 35112}),
+						g.MenuItem("4x", func() {cycles = 70224}),
+					},
+					),
+			},
+			),
 		
 	}).Build()
 
@@ -66,6 +79,7 @@ func loop() {
 		g.Label("IME: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IME), 16) + " IF: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IF), 16) + " IE: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IE), 16)),
 		g.Label("DIV: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.DIV), 16) + " TIMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TIMA), 16) + " TMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TMA), 16) + " TAC: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TAC), 16)),
 		g.Label("halt: " + strconv.FormatBool(cpu.halt)),
+		g.Label("P1: " + strconv.FormatUint(uint64(cpu.bus.keypad.P1), 2)),
 	})
 
 	g.Window("Tile Viewer", 510, 30, 200, 300, g.Layout{
@@ -95,7 +109,7 @@ func checkBootromSkip() bool {
 func refresh() {
     ticker := time.NewTicker(time.Second / 60)
     for {
-    	for i := 0; i < 17556; i++ {
+    	for i := 0; i < cycles; i++ {
     		cpu.bus.interrupt.handleInterrupts()
     		cpu.tick()
     		cpu.PPUTick()
@@ -271,3 +285,9 @@ func (cpu *CPU) checkInput() {
 	// g.IsKeyPressed(39)
 }
 
+func reset() { // still experimental
+	// reset state
+	
+	cpu = CPU{}
+	cpu.bus.cartridge.loadBootROM()
+}

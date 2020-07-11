@@ -37,33 +37,31 @@ func (cpu *CPU) PPUTick() {
 	}
 	switch cpu.bus.ppu.LCDCSTAT & 0x03 {
 		case 0:
+			cpu.bus.ppu.setHBlankInterrupt()
+			cpu.bus.interrupt.requestLCDCSTAT()
 			// HBlank
 			if cpu.bus.ppu.Cycles >= 204 {
 				cpu.bus.ppu.Cycles = 0
 				cpu.bus.ppu.LX = 0
-				cpu.bus.ppu.setHBlankInterrupt()
-				cpu.bus.interrupt.requestLCDCSTAT()
 				cpu.bus.ppu.drawScanLine()
 				cpu.bus.ppu.LY++
 				if cpu.bus.ppu.LY == 144 {
 					// execute VBlank
 					cpu.bus.ppu.LCDCSTAT |= 0x01
 					cpu.bus.ppu.LCDCSTAT &= 0xFD
-					cpu.bus.ppu.setVBlankInterrupt()
-					cpu.bus.interrupt.requestVBlank()
+					
 				} else {
 					// execute OAM search (mode 2)
-					
 					cpu.bus.ppu.LCDCSTAT |= 0x02
 					cpu.bus.ppu.LCDCSTAT &= 0xFE
-					
 				}
 			}
 		case 1:
+			cpu.bus.ppu.setVBlankInterrupt()
+			cpu.bus.interrupt.requestVBlank()
 			// VBlank
 			if cpu.bus.ppu.Cycles >= 4560 {
 				cpu.bus.ppu.Cycles = 0
-
 				cpu.bus.ppu.LY = 0
 				cpu.bus.ppu.LX = 0
 				// set to mode 2
@@ -72,6 +70,8 @@ func (cpu *CPU) PPUTick() {
 				
 			} // implement as correct interrupt later
 		case 2: 
+			cpu.bus.ppu.setOAMInterrupt()
+			cpu.bus.interrupt.requestLCDCSTAT()
 			if cpu.bus.ppu.Cycles >= 80 {
 				
 				cpu.bus.ppu.Cycles = 0
@@ -121,6 +121,7 @@ func (ppu *PPU) drawScanLine() {
 func (ppu *PPU) drawBGLine(left byte, right byte) {
 	for i := 0; i < 8; i++ {
 		// works fine
+		// fmt.Println(ppu.LY)
 		ppu.frameBuffer[ppu.LY][ppu.LX] = ((((1 << (7 - i)) & left)) >> (7 - i)) << 1 | ((1 << (7 - i)) & right) >> (7 - i)
 		ppu.LX++
 	}
@@ -159,6 +160,10 @@ func (ppu *PPU) setLYCInterrupt() {
 	ppu.LCDCSTAT |= (1 << 6)
 }
 
+func (ppu *PPU) setOAMInterrupt() {
+	ppu.LCDCSTAT |= (1 << 5)
+}
+
 func (ppu *PPU) setVBlankInterrupt() {
 	ppu.LCDCSTAT |= (1 << 4)
 }
@@ -166,3 +171,38 @@ func (ppu *PPU) setVBlankInterrupt() {
 func (ppu *PPU) setHBlankInterrupt() {
 	ppu.LCDCSTAT |= (1 << 3)
 }
+
+func (ppu *PPU) resetPPU() {
+	for i := 0; i < 144; i++ {
+		for j := 0; j < 160; j++ {
+			ppu.frameBuffer[i][j] = 0
+		}
+	}
+	for i := 0; i < 0x2000; i++ {
+		ppu.VRAM[i] = 0
+	}
+	for i := 0; i < 0xA0; i++ {
+		ppu.OAM[i] = 0
+	}
+	ppu.LCDC = 0
+	ppu.LCDCSTAT = 0
+	ppu.SCX = 0
+	ppu.SCY = 0
+	ppu.LY = 0
+	ppu.LYC = 0
+	ppu.LX = 0
+	ppu.WY = 0
+	ppu.WX = 0
+	ppu.Cycles = 0
+	ppu.BGP = 0
+	ppu.OBP0 = 0
+	ppu.OBP1 = 0
+	ppu.cpuVRAMAccess = false
+	ppu.cpuOAMAccess = false
+	ppu.DMA = 0
+
+}
+
+
+
+

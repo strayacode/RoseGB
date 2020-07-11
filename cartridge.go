@@ -9,7 +9,7 @@ import (
 )
 
 type Cartridge struct {
-	ROM [0x7FFF]byte
+	ROM [0x8000]byte
 	ERAM [0x2000]byte
 	header Header
 

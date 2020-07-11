@@ -45,3 +45,7 @@ func (timer *Timer) readFrequency() int {
 func (timer *Timer) readTimerEnable() bool {
 	return (((timer.TAC & (1 << 2)) >> 2) == 1)
 }
+
+func (timer *Timer) resetTimer() {
+	timer.DIV, timer.TIMA, timer.TMA, timer.TAC = 0, 0, 0, 0
+}
