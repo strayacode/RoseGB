@@ -100,6 +100,7 @@ func refresh() {
     	cpu.drawTileViewer()
     	cpu.drawFramebuffer()
     	cpu.checkInput()
+    	// fmt.Println(cpu.bus.read(cpu.PC + 1))
         g.Update()
         <-ticker.C
     } 

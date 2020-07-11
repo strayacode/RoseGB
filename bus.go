@@ -16,6 +16,7 @@ type Bus struct {
 	keypad Keypad
 	SB byte
 	SC byte
+	KEY1 byte
 }
 
 
@@ -36,6 +37,8 @@ func (bus *Bus) read(addr uint16) byte {
 		return bus.readIO(addr)
 	case addr >= 0xFF80 && addr <= 0xFFFE:
 		return bus.HRAM[addr - 0xFF80]
+	case addr == 0xFFFF:
+		return bus.interrupt.IE
 	default:
 		fmt.Println("DEBUG: non-readable memory location!", addr)
 		os.Exit(3)
@@ -146,6 +149,8 @@ func (bus *Bus) readIO(addr uint16) byte {
 		return bus.ppu.LYC
 	case 0xFF47:
 		return bus.ppu.BGP
+	case 0xFF4D:
+		return bus.KEY1
 	default:
 		fmt.Println(addr, "IO read not implemented yet!")
 		os.Exit(3)
@@ -266,10 +271,12 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 		bus.ppu.WY = data
 	case 0xFF4B:
 		bus.ppu.WX = data
+	case 0xFF4D:
+		bus.KEY1 = data
 	case 0xFF50:
 		bus.cartridge.unmapBootROM()
 	default:
-		fmt.Println("IO reg not handled!", addr)
+		fmt.Println("IO reg write not handled!", addr)
 		os.Exit(3)
 		return 0
 	}

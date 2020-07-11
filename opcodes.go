@@ -187,7 +187,15 @@ func op_0x0F(cpu *CPU) {
 	cpu.HFlag(0)
 }
 
-// LD DE, u16 DONE
+// STOP 
+func op_0x10(cpu *CPU) {
+	if cpu.bus.read(cpu.PC) == 0x00 {
+		cpu.PC++
+	}
+	
+}
+
+// LD DE, u16 
 func op_0x11(cpu *CPU) {
 	cpu.D = cpu.bus.read(cpu.PC + 1)
 	cpu.E = cpu.bus.read(cpu.PC)
@@ -420,9 +428,33 @@ func op_0x26(cpu *CPU) {
 	cpu.PC++
 }
 
-// DAA implement and understand later
+// DAA 
 func op_0x27(cpu *CPU) {
+	// addition
+	if cpu.getNFlag() == 0 {
+		if cpu.A > 0x99 || cpu.getCFlag() == 1 {
+			cpu.A += 0x60
+			cpu.CFlag(1)
+		}
+		if cpu.getHFlag() == 1 || (cpu.A & 0xF) > 0x09 {
+			cpu.A += 0x06
+		}
+	} else {
+		// subtraction
+		if cpu.getCFlag() == 1 {
+			cpu.A -= 0x60
+		}
+		if cpu.getHFlag() == 1 {
+			cpu.A -= 0x06
+		}
+	}
 
+	if cpu.A == 0 {
+		cpu.ZFlag(1)
+	} else {
+		cpu.ZFlag(0)
+	}
+	cpu.HFlag(0)
 }
 
 // JR Z, i8 
@@ -534,13 +566,13 @@ func op_0x30(cpu *CPU) {
 
 }
 
-// LD SP, u16 DONE
+// LD SP, u16 
 func op_0x31(cpu *CPU) {
 	cpu.SP = cpu.bus.read16(cpu.PC)
 	cpu.PC += 2
 }
 
-// LD (HL-), A DONE
+// LD (HL-), A 
 func op_0x32(cpu *CPU) {
 	cpu.bus.write((uint16(cpu.H) << 8 | uint16(cpu.L)), cpu.A)
 	cpu.L--
@@ -966,12 +998,12 @@ func op_0x75(cpu *CPU) {
 	cpu.bus.write((uint16(cpu.H) << 8 | uint16(cpu.L)), cpu.L)
 }
 
-// HALT DO LATER when i implement interrupts correctly
+// HALT DO LATER 
 func op_0x76(cpu *CPU) {
-	
+	cpu.halt = true
 }
 
-// LD (HL), A DONE
+// LD (HL), A 
 func op_0x77(cpu *CPU) {
 	cpu.bus.write((uint16(cpu.H) << 8 | uint16(cpu.L)), cpu.A)
 }
@@ -2646,7 +2678,7 @@ func op_0xE7(cpu *CPU) {
 // ADD SP, i8
 func op_0xE8(cpu *CPU) {
 	i8 := int8(cpu.bus.read(cpu.PC) + 1)
-	if ((cpu.SP & 0xF) + (uint16(i8) & 0xF)) & 0x10 == 0x10 {
+	if ((uint32(cpu.SP) & 0xF) + (uint32(i8) & 0xF)) & 0x10 == 0x10 {
 		cpu.HFlag(1)
 	} else {
 		cpu.HFlag(0)
@@ -2656,7 +2688,7 @@ func op_0xE8(cpu *CPU) {
 	} else {
 		cpu.CFlag(0)
 	}
-	cpu.SP += uint16(i8)
+	cpu.SP = uint16(int32(cpu.SP) + int32(i8))
 	cpu.ZFlag(0)
 	cpu.NFlag(0)
 	cpu.PC++
@@ -5188,7 +5220,7 @@ func cbop_0xFF(cpu *CPU) {
 }
 var opcodes [256]Opcode = [256]Opcode {
 	Opcode{4, op_0x00}, Opcode{12, op_0x01}, Opcode{8, op_0x02}, Opcode{8, op_0x03}, Opcode{4, op_0x04}, Opcode{4, op_0x05}, Opcode{8, op_0x06}, Opcode{4, op_0x07}, Opcode{20, op_0x08}, Opcode{8, op_0x09}, Opcode{8, op_0x0A}, Opcode{8, op_0x0B}, Opcode{4, op_0x0C}, Opcode{4, op_0x0D}, Opcode{8, op_0x0E}, Opcode{4, op_0x0F},
-	Opcode{4, op_null}, Opcode{12, op_0x11}, Opcode{8, op_0x12}, Opcode{8, op_0x13}, Opcode{4, op_0x14}, Opcode{4, op_0x15}, Opcode{8, op_0x16}, Opcode{4, op_0x17}, Opcode{12, op_0x18}, Opcode{8, op_0x19}, Opcode{8, op_0x1A}, Opcode{8, op_0x1B}, Opcode{4, op_0x1C}, Opcode{4, op_0x1D}, Opcode{8, op_0x1E}, Opcode{4, op_0x1F},
+	Opcode{4, op_0x10}, Opcode{12, op_0x11}, Opcode{8, op_0x12}, Opcode{8, op_0x13}, Opcode{4, op_0x14}, Opcode{4, op_0x15}, Opcode{8, op_0x16}, Opcode{4, op_0x17}, Opcode{12, op_0x18}, Opcode{8, op_0x19}, Opcode{8, op_0x1A}, Opcode{8, op_0x1B}, Opcode{4, op_0x1C}, Opcode{4, op_0x1D}, Opcode{8, op_0x1E}, Opcode{4, op_0x1F},
 	Opcode{8, op_0x20}, Opcode{12, op_0x21}, Opcode{8, op_0x22}, Opcode{8, op_0x23}, Opcode{4, op_0x24}, Opcode{4, op_0x25}, Opcode{8, op_0x26}, Opcode{4, op_0x27}, Opcode{8, op_0x28}, Opcode{8, op_0x29}, Opcode{8, op_0x2A}, Opcode{8, op_0x2B}, Opcode{4, op_0x2C}, Opcode{4, op_0x2D}, Opcode{8, op_0x2E}, Opcode{4, op_0x2F},
 	Opcode{8, op_0x30}, Opcode{12, op_0x31}, Opcode{8, op_0x32}, Opcode{8, op_0x33}, Opcode{12, op_0x34}, Opcode{12, op_0x35}, Opcode{12, op_0x36}, Opcode{4, op_0x37}, Opcode{8, op_0x38}, Opcode{8, op_0x39}, Opcode{8, op_0x3A}, Opcode{8, op_0x3B}, Opcode{4, op_0x3C}, Opcode{4, op_0x3D}, Opcode{8, op_0x3E}, Opcode{4, op_0x3F},
 	Opcode{4, op_0x40}, Opcode{4, op_0x41}, Opcode{4, op_0x42}, Opcode{4, op_0x43}, Opcode{4, op_0x44}, Opcode{4, op_0x45}, Opcode{8, op_0x46}, Opcode{4, op_0x47}, Opcode{4, op_0x48}, Opcode{4, op_0x49}, Opcode{4, op_0x4A}, Opcode{4, op_0x4B}, Opcode{4, op_0x4C}, Opcode{4, op_0x4D}, Opcode{8, op_0x4E}, Opcode{4, op_0x4F},

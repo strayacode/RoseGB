@@ -19,21 +19,33 @@ type CPU struct {
 	Cycles int
 	Opcode byte
 	bus Bus
+	halt bool
 }
 
 func (cpu *CPU) tick() {
-	if cpu.Cycles == 0 {
-		if cpu.bus.interrupt.IMEDelay == true {
-			cpu.bus.interrupt.IMEDelay = false
-			cpu.bus.interrupt.IME = 1
+	// run instructions when cpu is not halted
+	if cpu.halt == false {
+		if cpu.Cycles == 0 {
+			if cpu.bus.interrupt.IMEDelay == true {
+				cpu.bus.interrupt.IMEDelay = false
+				cpu.bus.interrupt.IME = 1
+			}
+			cpu.Opcode = cpu.bus.read(cpu.PC)
+			cpu.PC++
+			cpu.Cycles = opcodes[cpu.Opcode].Cycles
+			opcodes[cpu.Opcode].Exec(cpu)
 		}
-		
-		cpu.Opcode = cpu.bus.read(cpu.PC)
-		cpu.PC++
-		cpu.Cycles = opcodes[cpu.Opcode].Cycles
-		opcodes[cpu.Opcode].Exec(cpu)
-		cpu.bus.interrupt.handleInterrupts()
+			
+	} else {
+		// once interrupt has been serviced
+		if cpu.bus.interrupt.IME == 0 {
+			pendingInterrupts := (cpu.bus.interrupt.IE & cpu.bus.interrupt.IF) != 0
+			if pendingInterrupts {
+				cpu.halt = false
+			}
+		}
 	}
+	cpu.bus.interrupt.handleInterrupts()
 	cpu.Cycles--
 }
 
@@ -71,6 +83,14 @@ func (cpu *CPU) CFlag(value byte) {
 
 func (cpu *CPU) getZFlag() byte {
 	return (cpu.F & 0x80) >> 7
+}
+
+func (cpu *CPU) getNFlag() byte {
+	return (cpu.F & 0x40) >> 6
+}
+
+func (cpu *CPU) getHFlag() byte {
+	return (cpu.F & 0x20) >> 5
 }
 
 func (cpu *CPU) getCFlag() byte {
