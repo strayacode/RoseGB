@@ -192,7 +192,6 @@ func op_0x10(cpu *CPU) {
 	if cpu.bus.read(cpu.PC) == 0x00 {
 		cpu.PC++
 	}
-	
 }
 
 // LD DE, u16 
@@ -998,7 +997,7 @@ func op_0x75(cpu *CPU) {
 	cpu.bus.write((uint16(cpu.H) << 8 | uint16(cpu.L)), cpu.L)
 }
 
-// HALT DO LATER 
+// HALT
 func op_0x76(cpu *CPU) {
 	cpu.halt = true
 }

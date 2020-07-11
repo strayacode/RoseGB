@@ -96,6 +96,7 @@ func (bus *Bus) readIO(addr uint16) byte {
 	case 0xFF02:
 		return bus.SC
 	case 0xFF0F:
+		// fmt.Println(bus.interrupt.IF)
 		return bus.interrupt.IF
 	case 0xFF10:
 		return bus.apu.NR10 

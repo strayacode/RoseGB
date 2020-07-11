@@ -24,17 +24,19 @@ type CPU struct {
 
 func (cpu *CPU) tick() {
 	// run instructions when cpu is not halted
-	if cpu.halt == false {
+	if !cpu.halt {
 		if cpu.Cycles == 0 {
-			if cpu.bus.interrupt.IMEDelay == true {
+			if cpu.bus.interrupt.IMEDelay {
 				cpu.bus.interrupt.IMEDelay = false
 				cpu.bus.interrupt.IME = 1
 			}
 			cpu.Opcode = cpu.bus.read(cpu.PC)
 			cpu.PC++
 			cpu.Cycles = opcodes[cpu.Opcode].Cycles
-			cpu.bus.timer.elaspedCycles += opcodes[cpu.Opcode].Cycles
 			opcodes[cpu.Opcode].Exec(cpu)
+			if cpu.bus.timer.readTimerEnable() {
+				cpu.bus.timer.elaspedCycles += opcodes[cpu.Opcode].Cycles
+			}
 		}
 			
 	} else {
@@ -45,6 +47,10 @@ func (cpu *CPU) tick() {
 				cpu.halt = false
 			}
 		}
+		if cpu.bus.timer.readTimerEnable() {
+				cpu.bus.timer.elaspedCycles += 4
+		}
+		cpu.Cycles += 4
 	}
 	cpu.Cycles--
 }

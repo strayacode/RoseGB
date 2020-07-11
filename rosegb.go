@@ -65,6 +65,7 @@ func loop() {
 		g.Label("Opcode: 0x" + strconv.FormatUint(uint64(cpu.Opcode), 16)),
 		g.Label("IME: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IME), 16) + " IF: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IF), 16) + " IE: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IE), 16)),
 		g.Label("DIV: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.DIV), 16) + " TIMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TIMA), 16) + " TMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TMA), 16) + " TAC: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TAC), 16)),
+		g.Label("halt: " + strconv.FormatBool(cpu.halt)),
 	})
 
 	g.Window("Tile Viewer", 510, 30, 200, 300, g.Layout{
@@ -95,6 +96,7 @@ func refresh() {
     ticker := time.NewTicker(time.Second / 60)
     for {
     	for i := 0; i < 17556; i++ {
+    		cpu.bus.interrupt.handleInterrupts()
     		cpu.tick()
     		cpu.PPUTick()
     		cpu.bus.timer.tick()
@@ -102,7 +104,6 @@ func refresh() {
     			cpu.bus.interrupt.requestTimer()
     			cpu.bus.timer.timerInterrupt = false
     		}
-    		cpu.bus.interrupt.handleInterrupts()
     	}
     	cpu.drawTileViewer()
     	cpu.drawFramebuffer()

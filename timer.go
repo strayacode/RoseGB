@@ -19,8 +19,9 @@ func (timer *Timer) tick() {
 				timer.timerInterrupt = true
 			} else {
 				timer.TIMA++
-				timer.elaspedCycles -= threshold
 			}
+			timer.elaspedCycles -= threshold
+			
 		}
 	}
 }
@@ -29,13 +30,13 @@ func (timer *Timer) readFrequency() int {
 	result := timer.TAC & 0x03
 	switch result {
 	case 0:
-		return 4096
+		return 1024
 	case 1:
-		return 262144
+		return 16
 	case 2:
-		return 65536
+		return 64
 	case 3:
-		return 16384
+		return 256
 	default:
 		return 0
 	}
