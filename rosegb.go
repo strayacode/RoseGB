@@ -27,7 +27,7 @@ func main() {
 		cpu.bus.cartridge.loadBootROM()
 	}
 	title := "RoseGB - " + string(cpu.bus.cartridge.header.title[:])
-	wnd := g.NewMasterWindow(title, 800, 400, g.MasterWindowFlagsNotResizable, nil)
+	wnd := g.NewMasterWindow(title, 1000, 500, g.MasterWindowFlagsNotResizable, nil)
 
     go refresh()
 
