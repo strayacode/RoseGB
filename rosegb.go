@@ -301,16 +301,25 @@ func (cpu *CPU) drawTileViewer() {
 
 func (cpu *CPU) checkInput() {
 	// z, A
+	// fmt.Println(cpu.bus.keypad.P1)
 	if g.IsKeyPressed(90) == true && cpu.bus.keypad.getP15() == true {
-		// fmt.Println("A!")
 		cpu.bus.keypad.setA()
 		cpu.bus.interrupt.requestJoypad()
 	} else if g.IsKeyPressed(88) == true && cpu.bus.keypad.getP15() == true {
-		fmt.Println("B!")
 		cpu.bus.keypad.setB()
 		cpu.bus.interrupt.requestJoypad()
 	}
+	if g.IsKeyPressed(13) == true && cpu.bus.keypad.getP15() == true {
+		fmt.Println("start")
+		cpu.bus.keypad.setStart()
+		cpu.bus.interrupt.requestJoypad()
+	}
 
+	if g.IsKeyPressed(8) == true && cpu.bus.keypad.getP15() == true {
+		fmt.Println("select")
+		cpu.bus.keypad.setSelect()
+		cpu.bus.interrupt.requestJoypad()
+	}
 	
 
 

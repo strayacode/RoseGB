@@ -37,7 +37,6 @@ func (cpu *CPU) PPUTick() {
 			if cpu.bus.ppu.Cycles >= 204 {
 				cpu.bus.ppu.Cycles = 0
 				cpu.bus.ppu.LX = 0
-				cpu.bus.ppu.drawScanLine()
 				cpu.bus.ppu.LY++
 				if cpu.bus.ppu.LYC == cpu.bus.ppu.LY {
 					cpu.bus.ppu.setLYCInterrupt()
@@ -94,7 +93,7 @@ func (cpu *CPU) PPUTick() {
 			// read scanline from VRAM and put in framebuffer
 			
 			if cpu.bus.ppu.Cycles >= 172 {
-				
+				cpu.bus.ppu.drawScanLine()
 				// set to hblank
 				cpu.bus.ppu.LCDCSTAT &= 0xFC
 				cpu.bus.ppu.Cycles = 0

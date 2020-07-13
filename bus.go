@@ -238,7 +238,9 @@ func (bus *Bus) readIO(addr uint16) byte {
 func (bus *Bus) writeIO(addr uint16, data byte) {
 	switch addr {
 	case 0xFF00:
-		bus.keypad.P1 = data
+
+		bus.keypad.P1 = (data & 0xF0) | 0xF
+		fmt.Println(bus.keypad.P1)
 	case 0xFF01:
 		bus.SB = data
 	case 0xFF02:
@@ -328,7 +330,8 @@ func (bus *Bus) writeIO(addr uint16, data byte) {
 	case 0xFF40:
 		bus.ppu.LCDC = data
 	case 0xFF41:
-		bus.ppu.LCDCSTAT = data
+		bus.ppu.LCDCSTAT = (data & 0xF8) | bus.ppu.LCDCSTAT
+
 	case 0xFF42:
 		bus.ppu.SCY = data
 	case 0xFF43:
