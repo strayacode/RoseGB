@@ -17,11 +17,24 @@ reformed gameboy emulator in golang with revised structure
 - [x] 11-op a, (hl).gb
 - [ ] cpu_instrs.gb
 
-**mooneye-gb:**
+**instr:**
 - [x] daa.gb
+
+**MBC1:**
 - [x] bits_bank1.gb
-- [ ] bits_bank2.gb
+- [x] bits_bank2.gb
 - [x] bits_mode.gb
+- [ ] bits-ramg.gb
+- [ ] multicart_rom_8Mb.gb
+- [ ] ram_64kb.gb
+- [ ] ram_256kb.gb
+- [ ] rom_1Mb.gb
+- [ ] rom_2Mb.gb
+- [ ] rom_4Mb.gb
+- [ ] rom_8Mb.gb
+- [ ] rom_16Mb.gb
+- [ ] ram_512kb.gb
+
 **TODO:**
 - [x] Interrupts
 - [x] Timers
