@@ -19,7 +19,7 @@ reformed gameboy emulator in golang with revised structure
 
 **mooneye-gb:**
 - [x] daa.gb
-
+- [x] bits_bank1.gb
 **TODO:**
 - [x] Interrupts
 - [x] Timers
