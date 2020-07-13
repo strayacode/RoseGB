@@ -41,7 +41,7 @@ reformed gameboy emulator in golang with revised structure
 **TODO:**
 - [x] Interrupts
 - [x] Timers
-- [ ] Proper joypad functionality
+- [x] Proper joypad functionality
 - [ ] OAM + DMA
 - [ ] finish off MBC1
 - [ ] More interactive VRAM viewer
