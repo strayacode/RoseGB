@@ -1,5 +1,8 @@
 package main
 
+// TODO: MBC1, 128 ROM banks (max 2mb), 4 RAM banks (max 32kb)
+
+
 import (
 	"fmt"
 	"os"
@@ -17,13 +20,17 @@ type Bus struct {
 	SB byte
 	SC byte
 	KEY1 byte
+	enableERAM bool
+	bankingMode byte
 }
 
 
 func (bus *Bus) read(addr uint16) byte {
 	switch {
-	case addr >= 0x0000 && addr <= 0x7FFF:
+	case addr >= 0x0000 && addr <= 0x3FFF:
 		return bus.cartridge.ROM[addr]
+	case addr >= 0x4000 && addr <= 0x7FFF:
+		return bus.cartridge.rombank.bank[bus.cartridge.rombank.bankptr][addr - 0x4000]
 	case addr >= 0x8000 && addr <= 0x9FFF:
 		if bus.ppu.cpuVRAMAccess == true {
 			return bus.ppu.VRAM[addr - 0x8000]
@@ -48,8 +55,10 @@ func (bus *Bus) read(addr uint16) byte {
 
 func (bus *Bus) read16(addr uint16) uint16 {
 	switch {
-	case addr >= 0x0000 && addr <= 0x7FFF:
+	case addr >= 0x0000 && addr <= 0x3FFF:
 		return uint16(bus.cartridge.ROM[addr + 1]) << 8 | uint16(bus.cartridge.ROM[addr])
+	case addr >= 0x4000 && addr <= 0x7FFF:
+		return uint16(bus.cartridge.rombank.bank[bus.cartridge.rombank.bankptr][addr + 1 - 0x4000]) << 8 | uint16(bus.cartridge.rombank.bank[bus.cartridge.rombank.bankptr][addr - 0x4000])
 	case addr >= 0x8000 && addr <= 0x9FFF:
 		return uint16(bus.ppu.VRAM[addr + 1 - 0x8000]) << 8 | uint16(bus.ppu.VRAM[addr - 0x8000])
 	case addr >= 0xA000 && addr <= 0xBFFF:
@@ -67,14 +76,59 @@ func (bus *Bus) read16(addr uint16) uint16 {
 
 func (bus *Bus) write(addr uint16, data byte) {
 	switch {
+	case addr >= 0x0000 && addr <= 0x1FFF:
+		// MBC1
+		if bus.cartridge.header.cartridgeType == 1 {
+			if (data & 0xF) == 0xA {
+				bus.enableERAM = true
+			}
+		}
+	case addr >= 0x2000 && addr <= 0x3FFF:
+		// MBC1
+		if bus.cartridge.header.cartridgeType == 1 {
+			// if cart is more than 32kb use the secondary register to address ptr with more than 5 bits
+			if bus.cartridge.header.ROMSize > 0x04 {
+				if data == 0x00 {
+					bus.cartridge.rombank.bankptr = (bus.cartridge.rambank.bankptr << 5 | 0x01)
+				} else {
+					bus.cartridge.rombank.bankptr = (bus.cartridge.rambank.bankptr << 5 | (data & 0x1F))
+				}
+			} else {
+				if data == 0x00 {
+					bus.cartridge.rombank.bankptr = 0x01
+				} else {
+					bus.cartridge.rombank.bankptr = (data & 0x1F)
+				}
+			}
+		}
+	case addr >= 0x4000 && addr <= 0x5FFF:
+		// MBC1
+		if bus.cartridge.header.cartridgeType == 1 {
+			bus.cartridge.rambank.bankptr = (data & 0x03)
+		}
+	case addr >= 0x6000 && addr <= 0x7FFF:
+		// MBC1
+		if bus.cartridge.header.cartridgeType == 1 {
+			bus.bankingMode = (data & 0x1)
+		}
 	case addr >= 0x8000 && addr <= 0x9FFF:
 		// if bus.ppu.cpuVRAMAccess == true {
 		bus.ppu.VRAM[addr - 0x8000] = data
 		// }
 	case addr >= 0xA000 && addr <= 0xBFFF:
-		bus.cartridge.ERAM[addr - 0xA000] = data
+		// MBC1
+		if bus.cartridge.header.cartridgeType == 1 {
+			if bus.enableERAM == true {
+				bus.cartridge.ERAM[addr - 0xA000] = data
+			}
+		} else {
+			bus.cartridge.ERAM[addr - 0xA000] = data
+		}
+
 	case addr >= 0xC000 && addr <= 0xDFFF:
 		bus.WRAM[addr - 0xC000] = data
+	case addr >= 0xFE00 && addr <= 0xFE9F:
+		bus.ppu.OAM[addr - 0xFE00] = data
 	case addr >= 0xFF00 && addr <= 0xFF7F:
 		bus.writeIO(addr, data)
 	case addr >= 0xFF80 && addr <= 0xFFFE:
@@ -82,8 +136,6 @@ func (bus *Bus) write(addr uint16, data byte) {
 	case addr == 0xFFFF:
 		bus.interrupt.IE = data
 	default:
-		// fmt.Println("DEBUG: non-writeable memory location!", addr)
-		// os.Exit(3)
 	}
 }
 
@@ -95,8 +147,9 @@ func (bus *Bus) readIO(addr uint16) byte {
 		return bus.SB
 	case 0xFF02:
 		return bus.SC
+	case 0xFF04:
+		return bus.timer.DIV
 	case 0xFF0F:
-		// fmt.Println(bus.interrupt.IF)
 		return bus.interrupt.IF
 	case 0xFF10:
 		return bus.apu.NR10 
@@ -140,6 +193,8 @@ func (bus *Bus) readIO(addr uint16) byte {
 		return bus.apu.NR52 
 	case 0xFF40:
 		return bus.ppu.LCDC
+	case 0xFF41:
+		return bus.ppu.LCDCSTAT
 	case 0xFF42:
 		return bus.ppu.SCY
 	case 0xFF43:
@@ -154,12 +209,12 @@ func (bus *Bus) readIO(addr uint16) byte {
 		return bus.KEY1
 	default:
 		fmt.Println(addr, "IO read not implemented yet!")
-		os.Exit(3)
-		return 0
+		// os.Exit(3)
+		return 0xFF
 	}
 }
 
-func (bus *Bus) writeIO(addr uint16, data byte) byte {
+func (bus *Bus) writeIO(addr uint16, data byte) {
 	switch addr {
 	case 0xFF00:
 		bus.keypad.P1 = data
@@ -263,6 +318,7 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 		bus.ppu.LYC = data
 	case 0xFF46:
 		bus.ppu.DMA = data
+		// fmt.Println("dma")
 	case 0xFF47:
 		bus.ppu.BGP = data
 	case 0xFF48:
@@ -278,9 +334,6 @@ func (bus *Bus) writeIO(addr uint16, data byte) byte {
 	case 0xFF50:
 		bus.cartridge.unmapBootROM()
 	default:
-		fmt.Println("IO reg write not handled!", addr)
-		os.Exit(3)
-		return 0
 	}
-	return 0
+	
 }

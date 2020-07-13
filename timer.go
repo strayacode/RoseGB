@@ -10,6 +10,10 @@ type Timer struct {
 }
 
 func (timer *Timer) tick() {
+	// DIV check increment
+	if timer.elaspedCycles >= 256 {
+		timer.DIV++
+	}
 	if timer.readTimerEnable() == true {
 		threshold := timer.readFrequency()
 		if timer.elaspedCycles >= threshold {

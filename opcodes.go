@@ -2622,7 +2622,7 @@ func op_0xDF(cpu *CPU) {
 	cpu.PC = 0x0018
 }
 
-// LD (FF00 + u8), A DONE
+// LD (FF00 + u8), A 
 func op_0xE0(cpu *CPU) {
 	cpu.bus.write((0xFF00 + uint16(cpu.bus.read(cpu.PC))), cpu.A)
 	cpu.PC++

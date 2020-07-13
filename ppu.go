@@ -31,22 +31,23 @@ type PPU struct {
 
 func (cpu *CPU) PPUTick() {
 	cpu.bus.ppu.Cycles++
-	if cpu.bus.ppu.LYC == cpu.bus.ppu.LY {
-		cpu.bus.ppu.setLYCInterrupt()
-		cpu.bus.interrupt.requestLCDCSTAT()
-	}
+	
 	switch cpu.bus.ppu.LCDCSTAT & 0x03 {
 		case 0:
-			cpu.bus.ppu.setHBlankInterrupt()
-			cpu.bus.interrupt.requestLCDCSTAT()
 			// HBlank
 			if cpu.bus.ppu.Cycles >= 204 {
 				cpu.bus.ppu.Cycles = 0
 				cpu.bus.ppu.LX = 0
 				cpu.bus.ppu.drawScanLine()
 				cpu.bus.ppu.LY++
+				if cpu.bus.ppu.LYC == cpu.bus.ppu.LY {
+					cpu.bus.ppu.setLYCInterrupt()
+					cpu.bus.interrupt.requestLCDCSTAT()
+				}
 				if cpu.bus.ppu.LY == 144 {
 					// execute VBlank
+					cpu.bus.ppu.setVBlankInterrupt()
+					cpu.bus.interrupt.requestVBlank()
 					cpu.bus.ppu.LCDCSTAT |= 0x01
 					cpu.bus.ppu.LCDCSTAT &= 0xFD
 					
@@ -57,21 +58,32 @@ func (cpu *CPU) PPUTick() {
 				}
 			}
 		case 1:
-			cpu.bus.ppu.setVBlankInterrupt()
-			cpu.bus.interrupt.requestVBlank()
+			
 			// VBlank
+			if cpu.bus.ppu.Cycles % 456 == 0 {
+				cpu.bus.ppu.LY++
+				if cpu.bus.ppu.LYC == cpu.bus.ppu.LY {
+					cpu.bus.ppu.setLYCInterrupt()
+					cpu.bus.interrupt.requestLCDCSTAT()
+				}
+			}
 			if cpu.bus.ppu.Cycles >= 4560 {
 				cpu.bus.ppu.Cycles = 0
 				cpu.bus.ppu.LY = 0
+				if cpu.bus.ppu.LYC == cpu.bus.ppu.LY {
+					cpu.bus.ppu.setLYCInterrupt()
+					cpu.bus.interrupt.requestLCDCSTAT()
+				}
 				cpu.bus.ppu.LX = 0
 				// set to mode 2
 				cpu.bus.ppu.LCDCSTAT |= 0x02
 				cpu.bus.ppu.LCDCSTAT &= 0xFE
+				cpu.bus.ppu.setOAMInterrupt()
+				cpu.bus.interrupt.requestLCDCSTAT()
 				
-			} // implement as correct interrupt later
+			} 
 		case 2: 
-			cpu.bus.ppu.setOAMInterrupt()
-			cpu.bus.interrupt.requestLCDCSTAT()
+			
 			if cpu.bus.ppu.Cycles >= 80 {
 				
 				cpu.bus.ppu.Cycles = 0
@@ -84,10 +96,12 @@ func (cpu *CPU) PPUTick() {
 			
 			if cpu.bus.ppu.Cycles >= 172 {
 				
-				// set to mode 0
+				// set to hblank
 				cpu.bus.ppu.LCDCSTAT &= 0xFC
 				cpu.bus.ppu.Cycles = 0
 				cpu.bus.ppu.cpuVRAMAccess = true
+				cpu.bus.ppu.setHBlankInterrupt()
+				cpu.bus.interrupt.requestLCDCSTAT()
 
 			}
 	}
@@ -120,8 +134,6 @@ func (ppu *PPU) drawScanLine() {
 // take 2 bytes and add to framebuffer
 func (ppu *PPU) drawBGLine(left byte, right byte) {
 	for i := 0; i < 8; i++ {
-		// works fine
-		// fmt.Println(ppu.LY)
 		ppu.frameBuffer[ppu.LY][ppu.LX] = ((((1 << (7 - i)) & left)) >> (7 - i)) << 1 | ((1 << (7 - i)) & right) >> (7 - i)
 		ppu.LX++
 	}

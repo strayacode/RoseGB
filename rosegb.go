@@ -12,6 +12,17 @@ import (
 )
 
 var (
+	cartridgetypes = [28]string{
+		"ROM ONLY", "MBC1", "MBC1+RAM", "MBC1+RAM+BATTERY", "MBC2", "MBC2+BATTERY", "ROM+RAM", 
+		"ROM+RAM+BATTERY", "MMM01", "MMM01+RAM", "MMM01+RAM+BATTERY", "MBC3+TIMER+BATTERY", "MBC3+TIMER+RAM+BATTERY", "MBC3", 
+		"MBC3+RAM", "MBC3+RAM+BATTERY", "MBC5", "MBC5+RAM", "MBC5+RAM+BATTERY", "MBC5+RUMBLE", "MBC5+RUMBLE+RAM", 
+		"MBC5+RUMBLE+RAM+BATTERY", "MBC6", "MBC7+SENSOR+RUMBLE+RAM+BATTERY", "POCKET CAMERA", "BANDAI TAMA5", "HuC3", "HuC1+RAM+BATTERY",
+	}
+
+	ramsize = [6]string{
+		"None", "2KB", "8KB", "32KB", "128KB", "64KB",
+	}
+	romsize = ""
 	upLeft = image.Point{0, 0}
 	lowRight = image.Point{160, 144}
 	texture *g.Texture
@@ -22,10 +33,37 @@ var (
 
 func main() {
 	// init cpu
+	cpu.init()
 	if checkBootromSkip() {
 		cpu.skipBootROM()
 	} else {
 		cpu.bus.cartridge.loadBootROM()
+	}
+	switch cpu.bus.cartridge.header.ROMSize {
+	case 0x00:
+		romsize = "32KB"
+	case 0x01:
+		romsize = "64KB"
+	case 0x02:
+		romsize = "128KB"
+	case 0x03:
+		romsize = "256KB"
+	case 0x04:
+		romsize = "512KB"
+	case 0x05:
+		romsize = "1MB"
+	case 0x06:
+		romsize = "2MB"
+	case 0x07:
+		romsize = "4MB"
+	case 0x08:
+		romsize = "8MB"
+	case 0x52:
+		romsize = "1.1MB"
+	case 0x53:
+		romsize = "1.2MB"
+	case 0x54:
+		romsize = "1.5MB"
 	}
 	title := "RoseGB - " + string(cpu.bus.cartridge.header.title[:])
 	wnd := g.NewMasterWindow(title, 1000, 500, g.MasterWindowFlagsNotResizable, nil)
@@ -52,7 +90,6 @@ func loop() {
 					),
 			},
 			),
-		
 	}).Build()
 
 	g.Window("RoseGB", 10, 30, 180, 180, g.Layout{
@@ -92,6 +129,14 @@ func loop() {
 		}),
 	})
 	
+	g.Window("Cartridge", 720, 30, 200, 300, g.Layout{
+		g.Label("Cartridge Type: " + cartridgetypes[cpu.bus.cartridge.header.cartridgeType]),
+		g.Label("ROM Size: " + romsize),
+		g.Label("RAM Size: " + ramsize[cpu.bus.cartridge.header.RAMSize]),
+		g.Label("Banking Mode: " + strconv.Itoa(int(cpu.bus.bankingMode))),
+		g.Label("ROMBankptr: " + strconv.Itoa(int(cpu.bus.cartridge.rombank.bankptr))),
+		g.Label("RAMBankptr: " + strconv.Itoa(int(cpu.bus.cartridge.rambank.bankptr))),
+	})
 
 	
 }
@@ -109,7 +154,7 @@ func checkBootromSkip() bool {
 func refresh() {
     ticker := time.NewTicker(time.Second / 60)
     for {
-    	for i := 0; i < cycles; i++ {
+    	for i := 0; i < 70224; i++ {
     		cpu.bus.interrupt.handleInterrupts()
     		cpu.tick()
     		cpu.PPUTick()
@@ -290,4 +335,9 @@ func reset() { // still experimental
 	
 	cpu = CPU{}
 	cpu.bus.cartridge.loadBootROM()
+}
+
+func (cpu *CPU) init() {
+
+	cpu.bus.cartridge.rombank.bankptr = 0x01
 }

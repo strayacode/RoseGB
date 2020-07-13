@@ -26,6 +26,7 @@ func (cpu *CPU) tick() {
 	// run instructions when cpu is not halted
 	if !cpu.halt {
 		if cpu.Cycles == 0 {
+			// fmt.Println(cpu.Opcode)
 			if cpu.bus.interrupt.IMEDelay {
 				cpu.bus.interrupt.IMEDelay = false
 				cpu.bus.interrupt.IME = 1

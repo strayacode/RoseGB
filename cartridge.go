@@ -9,10 +9,11 @@ import (
 )
 
 type Cartridge struct {
-	ROM [0x8000]byte
+	ROM [0x4000]byte
 	ERAM [0x2000]byte
 	header Header
-
+	rombank ROMBank
+	rambank RAMBank
 }
 
 type Header struct {
@@ -21,6 +22,16 @@ type Header struct {
 	ROMSize byte // specify size of ROM (could have multiple banks)
 	RAMSize byte // specify size of ERAM (could have multiple banks)
 
+}
+
+type ROMBank struct {
+	bankptr byte // 0-256
+	bank [256][0x4000]byte
+}
+
+type RAMBank struct {
+	bankptr byte // 0-16
+	bank [16][0x2000]byte
 }
 
 func (cartridge *Cartridge) loadBootROM() {
@@ -37,7 +48,9 @@ func (cartridge *Cartridge) loadBootROM() {
 
 	for i := 0; i < len(file); i++ {
 		cartridge.ROM[i] = file[i]
+		cartridge.rombank.bank[0][i] = file[i]
 	}
+
 }
 
 func (cartridge *Cartridge) loadCartridge() {
@@ -65,8 +78,16 @@ func (cartridge *Cartridge) loadCartridge() {
 	cartridge.header.RAMSize = file[0x149]
 	
 
-	for i := 0; i < 0x7FFF; i++ {
+	for i := 0; i < 0x3FFF; i++ {
 		cartridge.ROM[i] = file[i]
+		cartridge.rombank.bank[0][i] = file[i]
+	}
+	for i := 1; i < 256; i++ {
+		for j := 0; j < 0x3FFF; j++ {
+			if (i * 0x4000) + j < len(file) {
+				cartridge.rombank.bank[i][j] = file[(i * 0x4000) + j]
+			}
+		}
 	}
 }
 
@@ -78,6 +99,7 @@ func (cartridge *Cartridge) unmapBootROM() {
 	}
 	for i := 0; i < 0xFF; i++ {
 		cartridge.ROM[i] = file[i]
+		cartridge.rombank.bank[0][i] = file[i]
 	}
 
 	
