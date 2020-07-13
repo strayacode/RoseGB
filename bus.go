@@ -37,7 +37,16 @@ func (bus *Bus) read(addr uint16) byte {
 		}
 		return 0
 	case addr >= 0xA000 && addr <= 0xBFFF:
-		return bus.cartridge.ERAM[addr - 0xA000]
+		switch bus.cartridge.header.cartridgeType {
+		case 0:
+			return bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr - 0xA000]
+		case 1, 2, 3:
+			if bus.enableERAM == true {
+				return bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr - 0xA000]
+			}
+		default:
+			return 0
+		}
 	case addr >= 0xC000 && addr <= 0xDFFF:
 		return bus.WRAM[addr - 0xC000]
 	case addr >= 0xFF00 && addr <= 0xFF7F:
@@ -51,6 +60,7 @@ func (bus *Bus) read(addr uint16) byte {
 		os.Exit(3)
 		return 0
 	}
+	return 0
 }
 
 func (bus *Bus) read16(addr uint16) uint16 {
@@ -62,7 +72,7 @@ func (bus *Bus) read16(addr uint16) uint16 {
 	case addr >= 0x8000 && addr <= 0x9FFF:
 		return uint16(bus.ppu.VRAM[addr + 1 - 0x8000]) << 8 | uint16(bus.ppu.VRAM[addr - 0x8000])
 	case addr >= 0xA000 && addr <= 0xBFFF:
-		return uint16(bus.cartridge.ERAM[addr + 1 - 0xA000]) << 8 | uint16(bus.cartridge.ERAM[addr - 0xA000])
+		return uint16(bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr + 1 - 0xA000]) << 8 | uint16(bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr - 0xA000])
 	case addr >= 0xC000 && addr <= 0xDFFF:
 		return uint16(bus.WRAM[addr + 1 - 0xC000]) << 8 | uint16(bus.WRAM[addr - 0xC000])
 	case addr >= 0xFF80 && addr <= 0xFFFE:
@@ -78,18 +88,24 @@ func (bus *Bus) write(addr uint16, data byte) {
 	switch {
 	case addr >= 0x0000 && addr <= 0x1FFF:
 		// MBC1
-		if bus.cartridge.header.cartridgeType == 1 {
+		switch bus.cartridge.header.cartridgeType {
+		case 1, 2, 3:
 			if (data & 0xF) == 0xA {
 				bus.enableERAM = true
+			} else {
+				bus.enableERAM = false
 			}
 		}
+
 	case addr >= 0x2000 && addr <= 0x3FFF:
 		// MBC1
-		if bus.cartridge.header.cartridgeType == 1 {
+		switch bus.cartridge.header.cartridgeType {
+		case 0:
+		case 1:
 			// if cart is more than 32kb use the secondary register to address ptr with more than 5 bits
 			if bus.cartridge.header.ROMSize > 0x04 {
 				if data == 0x00 {
-					bus.cartridge.rombank.bankptr = (bus.cartridge.rambank.bankptr << 5 | 0x01)
+					bus.cartridge.rombank.bankptr = 0x01
 				} else {
 					bus.cartridge.rombank.bankptr = (bus.cartridge.rambank.bankptr << 5 | (data & 0x1F))
 				}
@@ -103,8 +119,14 @@ func (bus *Bus) write(addr uint16, data byte) {
 		}
 	case addr >= 0x4000 && addr <= 0x5FFF:
 		// MBC1
-		if bus.cartridge.header.cartridgeType == 1 {
-			bus.cartridge.rambank.bankptr = (data & 0x03)
+		switch bus.cartridge.header.cartridgeType {
+			case 1, 2, 3:
+				// ram banking only applies for 32kb ram
+				if bus.cartridge.header.RAMSize == 0x03 && bus.enableERAM == true {
+					bus.cartridge.rambank.bankptr = (data & 0x03)
+				}
+			default:
+
 		}
 	case addr >= 0x6000 && addr <= 0x7FFF:
 		// MBC1
@@ -112,17 +134,16 @@ func (bus *Bus) write(addr uint16, data byte) {
 			bus.bankingMode = (data & 0x1)
 		}
 	case addr >= 0x8000 && addr <= 0x9FFF:
-		// if bus.ppu.cpuVRAMAccess == true {
 		bus.ppu.VRAM[addr - 0x8000] = data
-		// }
 	case addr >= 0xA000 && addr <= 0xBFFF:
 		// MBC1
-		if bus.cartridge.header.cartridgeType == 1 {
+		switch bus.cartridge.header.cartridgeType {
+		case 0:
+			bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr - 0xA000] = data
+		case 1, 2, 3:
 			if bus.enableERAM == true {
-				bus.cartridge.ERAM[addr - 0xA000] = data
+				bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr - 0xA000] = data
 			}
-		} else {
-			bus.cartridge.ERAM[addr - 0xA000] = data
 		}
 
 	case addr >= 0xC000 && addr <= 0xDFFF:

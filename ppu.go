@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "fmt"
 	"math"
 	"os"
 	// "strconv"
@@ -118,16 +117,28 @@ func (ppu *PPU) drawScanLine() {
 	startAddr := ppu.getBGMapAddr() + uint16(tileY * 32) + uint16(tileX)
 	// iterate through tiles in a scanline
 	for i := 0; i < 20; i++ {
+	
+		
 		if ppu.getBGStartAddr() == 0x8000 {
 			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000]) * 16) - 0x8000
 			tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
 			
 			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
 		} else {
-			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[uint16(int(startAddr) + 128) + uint16(i) - 0x8000]) * 16) - 0x8000
+			tileNumber := ppu.VRAM[startAddr + uint16(i) - 0x8000]
+			
+			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000]) * 16) - 0x8000 
+			
+			if tileNumber <= 127 {
+				start = (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000]) * 16) - 0x8000	
+			} else if tileNumber >= 128 {
+				start = uint16(tileNumber) * 16
+			}
 			tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
 			
 			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+			
+			
 		}
 	}
 }

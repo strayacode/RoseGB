@@ -7,22 +7,22 @@ type Timer struct {
 	DIV byte
 	elaspedCycles int
 	timerInterrupt bool
+	divCycles int
 }
 
 func (timer *Timer) tick() {
 	// DIV check increment
-	if timer.elaspedCycles >= 256 {
+	if timer.divCycles >= 256 {
 		timer.DIV++
+		timer.divCycles = 0
 	}
 	if timer.readTimerEnable() == true {
 		threshold := timer.readFrequency()
 		if timer.elaspedCycles >= threshold {
-			if timer.TIMA == 0xFF {
+			timer.TIMA++
+			if timer.TIMA == 0x00 {
 				timer.TIMA = timer.TMA
-				// request timer interrupt
 				timer.timerInterrupt = true
-			} else {
-				timer.TIMA++
 			}
 			timer.elaspedCycles -= threshold
 			

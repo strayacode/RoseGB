@@ -129,13 +129,14 @@ func loop() {
 		}),
 	})
 	
-	g.Window("Cartridge", 720, 30, 200, 300, g.Layout{
+	g.Window("Cartridge", 720, 30, 250, 300, g.Layout{
 		g.Label("Cartridge Type: " + cartridgetypes[cpu.bus.cartridge.header.cartridgeType]),
 		g.Label("ROM Size: " + romsize),
 		g.Label("RAM Size: " + ramsize[cpu.bus.cartridge.header.RAMSize]),
 		g.Label("Banking Mode: " + strconv.Itoa(int(cpu.bus.bankingMode))),
 		g.Label("ROMBankptr: " + strconv.Itoa(int(cpu.bus.cartridge.rombank.bankptr))),
 		g.Label("RAMBankptr: " + strconv.Itoa(int(cpu.bus.cartridge.rambank.bankptr))),
+		g.Label("isCBG: " + strconv.FormatBool(cpu.bus.cartridge.header.isCGB)),
 	})
 
 	

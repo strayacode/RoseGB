@@ -10,7 +10,6 @@ import (
 
 type Cartridge struct {
 	ROM [0x4000]byte
-	ERAM [0x2000]byte
 	header Header
 	rombank ROMBank
 	rambank RAMBank
@@ -21,6 +20,7 @@ type Header struct {
 	cartridgeType byte // type of cartridge
 	ROMSize byte // specify size of ROM (could have multiple banks)
 	RAMSize byte // specify size of ERAM (could have multiple banks)
+	isCGB bool
 
 }
 
@@ -72,11 +72,15 @@ func (cartridge *Cartridge) loadCartridge() {
 	for i := 0; i < 16; i++ {
 		cartridge.header.title[i] = file[i + 0x134]
 	}
-
 	cartridge.header.cartridgeType = file[0x147]
+
 	cartridge.header.ROMSize = file[0x148]
 	cartridge.header.RAMSize = file[0x149]
-	
+	if file[0x143] == 0x80 {
+		cartridge.header.isCGB = true
+	} else {
+		cartridge.header.isCGB = false
+	}
 
 	for i := 0; i < 0x3FFF; i++ {
 		cartridge.ROM[i] = file[i]
