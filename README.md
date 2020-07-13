@@ -49,3 +49,5 @@ reformed gameboy emulator in golang with revised structure
 **Usage:**
 
 to compile RoseGB in the terminal type ```go build rosegb.go apu.go bus.go cartridge.go cpu.go debug.go interrupt.go opcodes.go ppu.go timer.go keypad.go``` and use ```./rosegb path-to-file``` to run
+
+use the flag ```-skip-bootrom``` if you don't own a copy of the dmg bootrom
