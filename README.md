@@ -2,6 +2,8 @@
 reformed gameboy emulator in golang with revised structure
 
 **Test Pass Checklist:**
+
+**Blargg:**
 - [x] 01-special.gb
 - [x] 02-interrupts.gb
 - [x] 03-op sp, hl.gb
@@ -15,6 +17,8 @@ reformed gameboy emulator in golang with revised structure
 - [x] 11-op a, (hl).gb
 - [ ] cpu_instrs.gb
 
+**mooneye-gb:**
+- [x] daa.gb
 **TODO:**
 - [x] Interrupts
 - [x] Timers
