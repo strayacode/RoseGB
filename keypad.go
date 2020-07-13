@@ -2,8 +2,8 @@ package main
 
 type Keypad struct {
 	P1 byte
-	button [4]bool // a, b, select, start
-	direction [4]bool // right, left, up, down
+	button [4]byte // a, b, select, start
+	direction [4]byte // right, left, up, down
 	
 }
 
@@ -23,36 +23,36 @@ func (keypad *Keypad) getP14() bool {
 	return false
 }
 
-func (keypad *Keypad) setUp() {
-	keypad.P1 &= 0xFB
+func (keypad *Keypad) setUp(value byte) {
+	keypad.direction[2] = value
 }
 
-func (keypad *Keypad) setSelect() {
-	keypad.P1 &= 0xFB
+func (keypad *Keypad) setSelect(value byte) {
+	keypad.button[2] = value
 }
 
-func (keypad *Keypad) setDown() {
-	keypad.P1 &= 0xF7
+func (keypad *Keypad) setDown(value byte) {
+	keypad.direction[3] = value
 }
 
-func (keypad *Keypad) setStart() {
-	keypad.P1 &= 0xF7
+func (keypad *Keypad) setStart(value byte) {
+	keypad.button[3] = value
 }
 
-func (keypad *Keypad) setLeft() {
-	keypad.P1 &= 0xFD
+func (keypad *Keypad) setLeft(value byte) {
+	keypad.direction[1] = value
 }
 
-func (keypad *Keypad) setRight() {
-	keypad.P1 &= 0xFE
+func (keypad *Keypad) setRight(value byte) {
+	keypad.direction[0] = value
 }
 
-func (keypad *Keypad) setA() {
-	keypad.P1 &= 0xFE
+func (keypad *Keypad) setA(value byte) {
+	keypad.button[0] = value
 }
 
-func (keypad *Keypad) setB() {
-	keypad.P1 &= 0xFD
+func (keypad *Keypad) setB(value byte) {
+	keypad.button[1] = value
 }
 
 // yes, for example, P14 is associated with (in order from P10), right, left, up, down

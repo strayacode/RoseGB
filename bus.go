@@ -169,6 +169,16 @@ func (bus *Bus) write(addr uint16, data byte) {
 func (bus *Bus) readIO(addr uint16) byte {
 	switch addr {
 	case 0xFF00:
+		// fmt.Println(bus.keypad.P1)
+		// override the buttons
+		if bus.keypad.getP14() {
+			// fmt.Println("good")
+			bus.keypad.P1 &= (0xF0 | bus.keypad.direction[3] << 3 | bus.keypad.direction[2] << 2 | bus.keypad.direction[1] << 1 | bus.keypad.direction[0])
+		}
+		if bus.keypad.getP15() {
+			bus.keypad.P1 &= (0xF0 | bus.keypad.button[3] << 3 | bus.keypad.button[2] << 2 | bus.keypad.button[1] << 1 | bus.keypad.button[0])
+		} 
+
 		return bus.keypad.P1
 	case 0xFF01:
 		return bus.SB

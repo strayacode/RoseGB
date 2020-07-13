@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"os"
 	"flag"
-	"fmt"
 )
 
 var (
@@ -101,7 +100,7 @@ func loop() {
 			}
 		}),
 	})
-	g.Window("Debugger", 200, 30, 300, 300, g.Layout{
+	g.Window("Debugger", 200, 30, 300, 400, g.Layout{
 		g.Label("A: 0x" + strconv.FormatUint(uint64(cpu.A), 16)),
 		g.Label("B: 0x" + strconv.FormatUint(uint64(cpu.B), 16)),
 		g.Label("C: 0x" + strconv.FormatUint(uint64(cpu.C), 16)),
@@ -117,6 +116,8 @@ func loop() {
 		g.Label("DIV: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.DIV), 16) + " TIMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TIMA), 16) + " TMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TMA), 16) + " TAC: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TAC), 16)),
 		g.Label("halt: " + strconv.FormatBool(cpu.halt)),
 		g.Label("P1: " + strconv.FormatUint(uint64(cpu.bus.keypad.P1), 2)),
+		g.Label("Direction: " + strconv.FormatUint(uint64(cpu.bus.keypad.direction[3] << 3 | cpu.bus.keypad.direction[2] << 2 | cpu.bus.keypad.direction[1] << 1 | cpu.bus.keypad.direction[0]), 2)),
+		g.Label("Button: " + strconv.FormatUint(uint64(cpu.bus.keypad.button[3] << 3 | cpu.bus.keypad.button[2] << 2 | cpu.bus.keypad.button[1] << 1 | cpu.bus.keypad.button[0]), 2)),
 	})
 
 	g.Window("Tile Viewer", 510, 30, 200, 300, g.Layout{
@@ -301,43 +302,64 @@ func (cpu *CPU) drawTileViewer() {
 
 func (cpu *CPU) checkInput() {
 	// z, A
-	// fmt.Println(cpu.bus.keypad.P1)
-	if g.IsKeyPressed(90) == true && cpu.bus.keypad.getP15() == true {
-		cpu.bus.keypad.setA()
-		cpu.bus.interrupt.requestJoypad()
-	} else if g.IsKeyPressed(88) == true && cpu.bus.keypad.getP15() == true {
-		cpu.bus.keypad.setB()
-		cpu.bus.interrupt.requestJoypad()
+	if g.IsKeyDown(90) {
+		cpu.bus.keypad.setA(0)
+	} else {
+		cpu.bus.keypad.setA(1)
 	}
-	if g.IsKeyPressed(13) == true && cpu.bus.keypad.getP15() == true {
-		fmt.Println("start")
-		cpu.bus.keypad.setStart()
-		cpu.bus.interrupt.requestJoypad()
+		
+	// x, B
+	if g.IsKeyDown(88) {
+		cpu.bus.keypad.setB(0)
+	} else {
+		cpu.bus.keypad.setB(1)
 	}
 
-	if g.IsKeyPressed(8) == true && cpu.bus.keypad.getP15() == true {
-		fmt.Println("select")
-		cpu.bus.keypad.setSelect()
-		cpu.bus.interrupt.requestJoypad()
+	// return, start
+	if g.IsKeyDown(257)  {
+		cpu.bus.keypad.setStart(0)
+	} else {
+		cpu.bus.keypad.setStart(1)
+	}
+
+	// backspace, select
+	if g.IsKeyDown(259) {
+		cpu.bus.keypad.setSelect(0)
+	} else {
+		cpu.bus.keypad.setSelect(1)
 	}
 	
-
-
-	// x, B
-	// g.IsKeyPressed(88)
-	// up, up
-	// fmt.Println(g.IsKeyPressed(38), g.IsKeyPressed(90))
-	if g.IsKeyPressed(38) {
-		fmt.Println("up!")
-		cpu.bus.keypad.setUp()
-		cpu.bus.interrupt.requestJoypad()
+	// right key
+	if g.IsKeyDown(262) {
+		cpu.bus.keypad.setRight(0)
+	} else {
+		cpu.bus.keypad.setRight(1)
 	}
-	// // down, down
-	// g.IsKeyPressed(40)
-	// // left, left
-	// g.IsKeyPressed(37)
-	// // right, right
-	// g.IsKeyPressed(39)
+
+	// left key
+	if g.IsKeyDown(263) {
+		cpu.bus.keypad.setLeft(0)
+	} else {
+		cpu.bus.keypad.setLeft(1)
+	}
+
+	// up key
+	if g.IsKeyDown(265) {
+		cpu.bus.keypad.setUp(0)
+	} else {
+		cpu.bus.keypad.setUp(1)
+	}
+
+	// down key
+	if g.IsKeyDown(264) {
+		cpu.bus.keypad.setDown(0)
+	} else {
+		cpu.bus.keypad.setDown(1)
+	}
+
+
+
+	
 }
 
 func reset() { // still experimental
