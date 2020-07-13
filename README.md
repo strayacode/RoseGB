@@ -41,6 +41,9 @@ reformed gameboy emulator in golang with revised structure
 **TODO:**
 - [x] Interrupts
 - [x] Timers
+- [ ] Proper joypad functionality
+- [ ] OAM + DMA
+- [ ] finish off MBC1
 - [ ] More interactive VRAM viewer
 - [ ] play/pause/step functionality
 - [ ] add emulator window that can be "popped out" of the main window to play the emulator on any screen
