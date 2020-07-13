@@ -1,5 +1,9 @@
 package main
 
+import (
+	// "fmt"
+)
+
 type Timer struct {
 	TIMA byte
 	TMA byte
@@ -12,9 +16,10 @@ type Timer struct {
 
 func (timer *Timer) tick() {
 	// DIV check increment
+	timer.divCycles++
 	if timer.divCycles >= 256 {
 		timer.DIV++
-		timer.divCycles = 0
+		timer.divCycles -= 256
 	}
 	if timer.readTimerEnable() == true {
 		threshold := timer.readFrequency()
