@@ -49,6 +49,8 @@ func (bus *Bus) read(addr uint16) byte {
 		}
 	case addr >= 0xC000 && addr <= 0xDFFF:
 		return bus.WRAM[addr - 0xC000]
+	case addr >= 0xE000 && addr <= 0xFDFF:
+		return bus.WRAM[addr - 0xE000]
 	case addr >= 0xFF00 && addr <= 0xFF7F:
 		return bus.readIO(addr)
 	case addr >= 0xFF80 && addr <= 0xFFFE:
@@ -75,10 +77,12 @@ func (bus *Bus) read16(addr uint16) uint16 {
 		return uint16(bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr + 1 - 0xA000]) << 8 | uint16(bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr - 0xA000])
 	case addr >= 0xC000 && addr <= 0xDFFF:
 		return uint16(bus.WRAM[addr + 1 - 0xC000]) << 8 | uint16(bus.WRAM[addr - 0xC000])
+	case addr >= 0xE000 && addr <= 0xFDFF:
+		return uint16(bus.WRAM[addr + 1 - 0xE000]) << 8 | uint16(bus.WRAM[addr - 0xE000])
 	case addr >= 0xFF80 && addr <= 0xFFFE:
 		return uint16(bus.HRAM[addr + 1 - 0xFF80]) << 8 | uint16(bus.HRAM[addr - 0xFF80])
 	default:
-		fmt.Println("DEBUG: non-readable memory location!", addr)
+		fmt.Println("DEBUG: non-16bit readable memory location!", addr)
 		os.Exit(3)
 		return 0
 	}
@@ -148,6 +152,8 @@ func (bus *Bus) write(addr uint16, data byte) {
 
 	case addr >= 0xC000 && addr <= 0xDFFF:
 		bus.WRAM[addr - 0xC000] = data
+	case addr >= 0xE000 && addr <= 0xFDFF:
+		bus.WRAM[addr - 0xE000] = data
 	case addr >= 0xFE00 && addr <= 0xFE9F:
 		bus.ppu.OAM[addr - 0xFE00] = data
 	case addr >= 0xFF00 && addr <= 0xFF7F:
@@ -238,9 +244,7 @@ func (bus *Bus) readIO(addr uint16) byte {
 func (bus *Bus) writeIO(addr uint16, data byte) {
 	switch addr {
 	case 0xFF00:
-
 		bus.keypad.P1 = (data & 0xF0) | 0xF
-		fmt.Println(bus.keypad.P1)
 	case 0xFF01:
 		bus.SB = data
 	case 0xFF02:
