@@ -3,8 +3,7 @@ package main
 import (
 	"math"
 	"os"
-	"fmt"
-	// "strconv"
+	// "fmt"
 )
 
 type PPU struct {
@@ -124,7 +123,7 @@ func (ppu *PPU) spriteSelect() {
 			y := ppu.OAM[j]
 			if y > 0 && y < 160 {
 				
-				if y + 8 >= ppu.LY && y <= ppu.LY {
+				if y - 8 >= ppu.LY && y - 16 <= ppu.LY {
 
 					// x coordinate
 					x := ppu.OAM[j + 1]
@@ -174,13 +173,13 @@ func (ppu *PPU) drawScanLine() {
 		// draw sprites now
 		for j := 0; j < 10; j++ {
 			if (ppu.LCDC & (1 << 1)) >> 1 == 1 && ppu.visibleSprites[j] >= 0 {
-				
-				if ppu.OAM[ppu.visibleSprites[j] + 1] - 8 >= ppu.LX && ppu.OAM[ppu.visibleSprites[j] + 1] - 8 <= ppu.LX + 8 { 
+				// fmt.Println(ppu.OAM[ppu.visibleSprites[j] + 1] - 8, ppu.LX)
+				if ppu.OAM[ppu.visibleSprites[j] + 1] - 8 >= ppu.LX && ppu.OAM[ppu.visibleSprites[j] + 1] <= ppu.LX + 8 { 
 					// get tile data
 					start := (uint16(ppu.OAM[ppu.visibleSprites[j] + 2]) * 16)
 					// draw sprite
 					tileOffset := uint16((ppu.LY) % 8) * 2
-					ppu.drawSPRLine(ppu.OAM[ppu.visibleSprites[j] + 3], ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+					ppu.drawSPRLine((ppu.OAM[ppu.visibleSprites[j] + 3] & (1 << 4)) >> 4, ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
 				}
 			}
 		}
@@ -203,8 +202,9 @@ func (ppu *PPU) drawSPRLine(attr byte, left byte, right byte) {
 		} else {
 			colour = (ppu.OBP0 & (0x03 << (selection * 2))) >> (selection * 2)
 		}
-		ppu.frameBuffer[ppu.LY][ppu.LX + byte(i)] = colour
-
+		if colour != 0 {
+			ppu.frameBuffer[ppu.LY][ppu.LX + byte(i)] = colour
+		}
 		
 	}
 }

@@ -18,6 +18,14 @@ var (
 		"MBC3+RAM", "MBC3+RAM+BATTERY", "MBC5", "MBC5+RAM", "MBC5+RAM+BATTERY", "MBC5+RUMBLE", "MBC5+RUMBLE+RAM", 
 		"MBC5+RUMBLE+RAM+BATTERY", "MBC6", "MBC7+SENSOR+RUMBLE+RAM+BATTERY", "POCKET CAMERA", "BANDAI TAMA5", "HuC3", "HuC1+RAM+BATTERY",
 	}
+	colours = [4][4]Colour{
+		{Colour{255, 255, 255, 255}, Colour{192, 192, 192, 255}, Colour{96, 96, 96, 255}, Colour{0, 0, 0, 255}},
+		{Colour{202, 220, 159, 255}, Colour{155, 188, 15, 255}, Colour{48, 98, 48, 255}, Colour{15, 56, 15, 255}},
+		{Colour{27, 3, 38, 255}, Colour{122, 28, 75, 255}, Colour{186, 80, 68, 255}, Colour{239, 249, 214, 255}},
+		{Colour{98, 46, 76, 255}, Colour{117, 80, 232, 255}, Colour{96, 143, 207, 255}, Colour{139, 229, 255, 255}},
+		
+	} 
+	paletteIndex = 0
 
 	ramsize = [6]string{
 		"None", "2KB", "8KB", "32KB", "128KB", "64KB",
@@ -39,6 +47,7 @@ func main() {
 	} else {
 		cpu.bus.cartridge.loadBootROM()
 	}
+	
 	switch cpu.bus.cartridge.header.ROMSize {
 	case 0x00:
 		romsize = "32KB"
@@ -82,11 +91,17 @@ func loop() {
 		}),
 		g.Menu("Options", g.Layout {
 						g.Menu("Emulation Speed", g.Layout {
-						g.MenuItem("1/2x", func() {cycles = 35112}),
-						g.MenuItem("1x", func() {cycles = 70224}),
-						g.MenuItem("2x", func() {cycles = 140448}),
-						g.MenuItem("4x", func() {cycles = 280896}),
-					},
+							g.MenuItem("1/2x", func() {cycles = 35112}),
+							g.MenuItem("1x", func() {cycles = 70224}),
+							g.MenuItem("2x", func() {cycles = 140448}),
+							g.MenuItem("4x", func() {cycles = 280896}),
+						},),
+						g.Menu("Palette", g.Layout {
+							g.MenuItem("Greyscale", func() {paletteIndex = 0}),
+							g.MenuItem("Greenscale", func() {paletteIndex = 1}),
+							g.MenuItem("Crimson", func() {paletteIndex = 2}),
+							g.MenuItem("Wish", func() {paletteIndex = 3}),
+						},
 					),
 			},
 			),
@@ -229,15 +244,13 @@ type Colour struct {
 }
 
 func (cpu *CPU) drawFramebuffer() {
-	var colours [4]Colour = [4]Colour{
-		Colour{202, 220, 159, 255}, Colour{155, 188, 15, 255}, Colour{48, 98, 48, 255}, Colour{15, 56, 15, 255},
-	} 
+	
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
 	for i := 0; i < 144; i++ {
 		for j := 0; j < 160; j++ {
 			// get palette
 			tileColour := cpu.bus.ppu.frameBuffer[i][j]
-			colour := color.RGBA{colours[tileColour].R, colours[tileColour].G, colours[tileColour].B, colours[tileColour].A}
+			colour := color.RGBA{colours[paletteIndex][tileColour].R, colours[paletteIndex][tileColour].G, colours[paletteIndex][tileColour].B, colours[paletteIndex][tileColour].A}
 			img.Set(j, i, colour)
 		}
 	}
@@ -245,9 +258,7 @@ func (cpu *CPU) drawFramebuffer() {
 }
 
 func (cpu *CPU) drawTileViewer() {
-	var colours [4]Colour = [4]Colour{
-		Colour{202, 220, 159, 255}, Colour{155, 188, 15, 255}, Colour{48, 98, 48, 255}, Colour{15, 56, 15, 255},
-	} 
+	
 	img := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{128, 192}})
 	x := 0
 	y := 0
@@ -268,7 +279,7 @@ func (cpu *CPU) drawTileViewer() {
 			} else if value == 3 {
 				tileColour = (tileColour & 0xC0) >> 6	
 			}
-			colour := color.RGBA{colours[tileColour].R, colours[tileColour].G, colours[tileColour].B, colours[tileColour].A}
+			colour := color.RGBA{colours[paletteIndex][tileColour].R, colours[paletteIndex][tileColour].G, colours[paletteIndex][tileColour].B, colours[paletteIndex][tileColour].A}
 			
 			img.Set(x, y, colour)
 			x++
@@ -291,14 +302,14 @@ func (cpu *CPU) drawTileViewer() {
 
 func (cpu *CPU) checkInput() {
 	// z, A
-	if g.IsKeyDown(90) {
+	if g.IsKeyDown(88) {
 		cpu.bus.keypad.setA(0)
 	} else {
 		cpu.bus.keypad.setA(1)
 	}
 		
 	// x, B
-	if g.IsKeyDown(88) {
+	if g.IsKeyDown(90) {
 		cpu.bus.keypad.setB(0)
 	} else {
 		cpu.bus.keypad.setB(1)
@@ -362,3 +373,4 @@ func (cpu *CPU) init() {
 
 	cpu.bus.cartridge.rombank.bankptr = 0x01
 }
+
