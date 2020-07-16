@@ -25,8 +25,8 @@ type Header struct {
 }
 
 type ROMBank struct {
-	bankptr byte // 0-256
-	bank [256][0x4000]byte
+	bankptr uint16 // 0-256
+	bank [512][0x4000]byte
 }
 
 type RAMBank struct {
@@ -82,12 +82,12 @@ func (cartridge *Cartridge) loadCartridge() {
 		cartridge.header.isCGB = false
 	}
 
-	for i := 0; i < 0x3FFF; i++ {
+	for i := 0; i < 0x4000; i++ {
 		cartridge.ROM[i] = file[i]
 		cartridge.rombank.bank[0][i] = file[i]
 	}
-	for i := 1; i < 256; i++ {
-		for j := 0; j < 0x3FFF; j++ {
+	for i := 1; i < 512; i++ {
+		for j := 0; j < 0x4000; j++ {
 			if (i * 0x4000) + j < len(file) {
 				cartridge.rombank.bank[i][j] = file[(i * 0x4000) + j]
 			}
