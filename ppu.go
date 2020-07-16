@@ -3,6 +3,7 @@ package main
 import (
 	"math"
 	"os"
+	"fmt"
 	// "strconv"
 )
 
@@ -26,6 +27,7 @@ type PPU struct {
 	cpuVRAMAccess bool
 	cpuOAMAccess bool
 	DMA byte
+	visibleSprites [10]int
 }
 
 func (cpu *CPU) PPUTick() {
@@ -81,9 +83,9 @@ func (cpu *CPU) PPUTick() {
 				
 			} 
 		case 2: 
-			
+			// search oam for 10 sprites that can fit on the current line and place in an array
 			if cpu.bus.ppu.Cycles >= 80 {
-				
+				cpu.bus.ppu.spriteSelect()
 				cpu.bus.ppu.Cycles = 0
 				// set to mode 3
 				cpu.bus.ppu.LCDCSTAT |= 0x03
@@ -93,7 +95,9 @@ func (cpu *CPU) PPUTick() {
 			// read scanline from VRAM and put in framebuffer
 			
 			if cpu.bus.ppu.Cycles >= 172 {
-				cpu.bus.ppu.drawScanLine()
+				if (cpu.bus.ppu.LCDC & (1 << 7)) >> 7 == 1 {
+					cpu.bus.ppu.drawScanLine()
+				}
 				// set to hblank
 				cpu.bus.ppu.LCDCSTAT &= 0xFC
 				cpu.bus.ppu.Cycles = 0
@@ -106,49 +110,112 @@ func (cpu *CPU) PPUTick() {
 }
 
 
+// search oam for first 10 sprites that can go on a line 
+func (ppu *PPU) spriteSelect() {
+	// clear previous sprites selection first
+	// fmt.Println(ppu.OAM)
+	for i := 0; i < 10; i++ {
+		ppu.visibleSprites[i] = -1
+	}
+	index := 0
+	for j := 0; j < 0xA0; j += 4 {
+		if index < 10 {
+			// y coordinate
+			y := ppu.OAM[j]
+			if y > 0 && y < 160 {
+				
+				if y + 8 >= ppu.LY && y <= ppu.LY {
+
+					// x coordinate
+					x := ppu.OAM[j + 1]
+					// fmt.Println(j)
+					if x > 0 && x < 168 {
+						ppu.visibleSprites[index] = j
+					} else {
+						ppu.visibleSprites[index] = -1 // if negative dont draw the sprite
+					}
+					index++
+				}
+			}
+			
+		}
+	}
+	
+
+}
+
 
 // trying to draw line by line
 func (ppu *PPU) drawScanLine() {
 	
-	tileY := math.Floor(float64(ppu.LY + ppu.SCY) / 8)
-	tileX := math.Floor(float64(ppu.SCX + ppu.LX) / 8)
+	offsetY := math.Floor(float64(ppu.LY + ppu.SCY) / 8)
+	offsetX := math.Floor(float64(ppu.SCX + ppu.LX) / 8)
+	tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
+	startAddr := ppu.getBGMapAddr() + uint16(offsetY * 32) + uint16(offsetX)
 	
-	startAddr := ppu.getBGMapAddr() + uint16(tileY * 32) + uint16(tileX)
 	// iterate through tiles in a scanline
 	for i := 0; i < 20; i++ {
-	
-		
 		if ppu.getBGStartAddr() == 0x8000 {
-			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000]) * 16) - 0x8000
-			tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
-			
+			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]) * 16) - 0x8000
 			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
 		} else {
-			tileNumber := ppu.VRAM[startAddr + uint16(i) - 0x8000]
+			tileNumber := ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]
 			
-			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000]) * 16) - 0x8000 
+			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]) * 16) - 0x8000 
 			
 			if tileNumber <= 127 {
-				start = (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[startAddr + uint16(i) - 0x8000]) * 16) - 0x8000	
+				start = (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]) * 16) - 0x8000	
 			} else if tileNumber >= 128 {
 				start = uint16(tileNumber) * 16
 			}
-			tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
-			
 			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
-			
-			
 		}
+
+		// draw sprites now
+		for j := 0; j < 10; j++ {
+			if (ppu.LCDC & (1 << 1)) >> 1 == 1 && ppu.visibleSprites[j] >= 0 {
+				
+				if ppu.OAM[ppu.visibleSprites[j] + 1] - 8 >= ppu.LX && ppu.OAM[ppu.visibleSprites[j] + 1] - 8 <= ppu.LX + 8 { 
+					// get tile data
+					start := (uint16(ppu.OAM[ppu.visibleSprites[j] + 2]) * 16)
+					// draw sprite
+					tileOffset := uint16((ppu.LY) % 8) * 2
+					ppu.drawSPRLine(ppu.OAM[ppu.visibleSprites[j] + 3], ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+				}
+			}
+		}
+
+
+		ppu.LX += 8
+	}
+
+	
+}
+
+// take 2 bytes and add to framebuffer
+func (ppu *PPU) drawSPRLine(attr byte, left byte, right byte) {
+	// fmt.Println(left, right)
+	for i := 0; i < 8; i++ {
+		var selection byte = ((((1 << (7 - i)) & left)) >> (7 - i)) << 1 | ((1 << (7 - i)) & right) >> (7 - i)
+		var colour byte = 0
+		if ppu.spritePalette(attr) == 1 {
+			colour = (ppu.OBP1 & (0x03 << (selection * 2))) >> (selection * 2)
+		} else {
+			colour = (ppu.OBP0 & (0x03 << (selection * 2))) >> (selection * 2)
+		}
+		ppu.frameBuffer[ppu.LY][ppu.LX + byte(i)] = colour
+
+		
 	}
 }
+
 // take 2 bytes and add to framebuffer
 func (ppu *PPU) drawBGLine(left byte, right byte) {
 	for i := 0; i < 8; i++ {
-		ppu.frameBuffer[ppu.LY][ppu.LX] = ((((1 << (7 - i)) & left)) >> (7 - i)) << 1 | ((1 << (7 - i)) & right) >> (7 - i)
-		ppu.LX++
+		selection := ((((1 << (7 - i)) & left)) >> (7 - i)) << 1 | ((1 << (7 - i)) & right) >> (7 - i)
+		colour := (ppu.BGP & (0x03 << (selection * 2))) >> (selection * 2)
+		ppu.frameBuffer[ppu.LY][ppu.LX + byte(i)] = colour
 	}
-	
-
 }
 
 func (ppu *PPU) getBGStartAddr() uint16 {
@@ -194,35 +261,14 @@ func (ppu *PPU) setHBlankInterrupt() {
 	ppu.LCDCSTAT |= (1 << 3)
 }
 
-func (ppu *PPU) resetPPU() {
-	for i := 0; i < 144; i++ {
-		for j := 0; j < 160; j++ {
-			ppu.frameBuffer[i][j] = 0
-		}
+func (ppu *PPU) dmaTransfer() {
+	for i := 0; i < 0x9F; i++ {
+		cpu.bus.write(0xFE00 + uint16(i), cpu.bus.read(uint16(cpu.bus.ppu.DMA) * 256 + uint16(i)))
 	}
-	for i := 0; i < 0x2000; i++ {
-		ppu.VRAM[i] = 0
-	}
-	for i := 0; i < 0xA0; i++ {
-		ppu.OAM[i] = 0
-	}
-	ppu.LCDC = 0
-	ppu.LCDCSTAT = 0
-	ppu.SCX = 0
-	ppu.SCY = 0
-	ppu.LY = 0
-	ppu.LYC = 0
-	ppu.LX = 0
-	ppu.WY = 0
-	ppu.WX = 0
-	ppu.Cycles = 0
-	ppu.BGP = 0
-	ppu.OBP0 = 0
-	ppu.OBP1 = 0
-	ppu.cpuVRAMAccess = false
-	ppu.cpuOAMAccess = false
-	ppu.DMA = 0
+}
 
+func (ppu *PPU) spritePalette(attr byte) byte {
+	return ((attr & 0x10) >> 4)
 }
 
 

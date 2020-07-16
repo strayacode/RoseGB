@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"os"
 	"flag"
+	// "fmt"
 )
 
 var (
@@ -26,7 +27,7 @@ var (
 	lowRight = image.Point{160, 144}
 	texture *g.Texture
 	tileTexture *g.Texture
-	cycles = 17556
+	cycles = 70224
 	cpu = CPU{}
 )
 
@@ -81,10 +82,10 @@ func loop() {
 		}),
 		g.Menu("Options", g.Layout {
 						g.Menu("Emulation Speed", g.Layout {
-						g.MenuItem("1/2x", func() {cycles = 8778}),
-						g.MenuItem("1x", func() {cycles = 17556}),
-						g.MenuItem("2x", func() {cycles = 35112}),
-						g.MenuItem("4x", func() {cycles = 70224}),
+						g.MenuItem("1/2x", func() {cycles = 35112}),
+						g.MenuItem("1x", func() {cycles = 70224}),
+						g.MenuItem("2x", func() {cycles = 140448}),
+						g.MenuItem("4x", func() {cycles = 280896}),
 					},
 					),
 			},
@@ -156,7 +157,7 @@ func checkBootromSkip() bool {
 func refresh() {
     ticker := time.NewTicker(time.Second / 60)
     for {
-    	for i := 0; i < 70224; i++ {
+    	for i := 0; i < cycles; i++ {
     		cpu.bus.interrupt.handleInterrupts()
     		cpu.tick()
     		cpu.PPUTick()
@@ -169,6 +170,7 @@ func refresh() {
     	cpu.drawTileViewer()
     	cpu.drawFramebuffer()
     	cpu.checkInput()
+    	// fmt.Println(cpu.bus.ppu.OAM)
         g.Update()
         <-ticker.C
     } 
@@ -228,26 +230,13 @@ type Colour struct {
 
 func (cpu *CPU) drawFramebuffer() {
 	var colours [4]Colour = [4]Colour{
-		Colour{255, 255, 255, 255}, Colour{192, 192, 192, 255}, Colour{96, 96, 96, 255}, Colour{0, 0, 0, 255},
+		Colour{202, 220, 159, 255}, Colour{155, 188, 15, 255}, Colour{48, 98, 48, 255}, Colour{15, 56, 15, 255},
 	} 
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
 	for i := 0; i < 144; i++ {
 		for j := 0; j < 160; j++ {
 			// get palette
-			tileColour := cpu.bus.read(0xFF47)
-			if cpu.bus.ppu.frameBuffer[i][j] == 0 {
-				tileColour &= 0x03
-				
-			} else if cpu.bus.ppu.frameBuffer[i][j] == 1 {
-				tileColour = (tileColour & 0xC) >> 2
-				
-			} else if cpu.bus.ppu.frameBuffer[i][j] == 2 {
-				tileColour = (tileColour & 0x30) >> 4
-				
-			} else if cpu.bus.ppu.frameBuffer[i][j] == 3 {
-				tileColour = (tileColour & 0xC0) >> 6
-				
-			}
+			tileColour := cpu.bus.ppu.frameBuffer[i][j]
 			colour := color.RGBA{colours[tileColour].R, colours[tileColour].G, colours[tileColour].B, colours[tileColour].A}
 			img.Set(j, i, colour)
 		}
@@ -257,7 +246,7 @@ func (cpu *CPU) drawFramebuffer() {
 
 func (cpu *CPU) drawTileViewer() {
 	var colours [4]Colour = [4]Colour{
-		Colour{255, 255, 255, 255}, Colour{192, 192, 192, 255}, Colour{96, 96, 96, 255}, Colour{0, 0, 0, 255},
+		Colour{202, 220, 159, 255}, Colour{155, 188, 15, 255}, Colour{48, 98, 48, 255}, Colour{15, 56, 15, 255},
 	} 
 	img := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{128, 192}})
 	x := 0

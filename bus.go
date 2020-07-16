@@ -51,6 +51,8 @@ func (bus *Bus) read(addr uint16) byte {
 		return bus.WRAM[addr - 0xC000]
 	case addr >= 0xE000 && addr <= 0xFDFF:
 		return bus.WRAM[addr - 0xE000]
+	case addr >= 0xFE00 && addr <= 0xFE9F:
+		return bus.ppu.OAM[addr - 0xFE00]
 	case addr >= 0xFF00 && addr <= 0xFF7F:
 		return bus.readIO(addr)
 	case addr >= 0xFF80 && addr <= 0xFFFE:
@@ -242,6 +244,8 @@ func (bus *Bus) readIO(addr uint16) byte {
 		return bus.ppu.LYC
 	case 0xFF47:
 		return bus.ppu.BGP
+	case 0xFF4B:
+		return bus.ppu.WX
 	case 0xFF4D:
 		return bus.KEY1
 	default:
@@ -356,7 +360,8 @@ func (bus *Bus) writeIO(addr uint16, data byte) {
 		bus.ppu.LYC = data
 	case 0xFF46:
 		bus.ppu.DMA = data
-		// fmt.Println("dma")
+		bus.ppu.dmaTransfer()
+		// fmt.Println(data, "dma")
 	case 0xFF47:
 		bus.ppu.BGP = data
 	case 0xFF48:
