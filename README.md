@@ -26,8 +26,8 @@ reformed gameboy emulator in golang with revised structure
 **MBC1:**
 - [x] bits_bank1.gb
 - [x] bits_bank2.gb
-- [x] bits_mode.gb
-- [ ] bits-ramg.gb
+- [ ] bits_mode.gb
+- [x] bits-ramg.gb
 - [ ] multicart_rom_8Mb.gb
 - [ ] ram_64kb.gb
 - [ ] ram_256kb.gb
@@ -42,7 +42,7 @@ reformed gameboy emulator in golang with revised structure
 - [x] Interrupts
 - [x] Timers
 - [x] Proper joypad functionality
-- [ ] OAM + DMA
+- [x] OAM + DMA
 - [ ] finish off MBC1
 - [ ] More interactive VRAM viewer
 - [ ] play/pause/step functionality
