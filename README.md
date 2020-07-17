@@ -3,6 +3,7 @@ reformed gameboy emulator in golang with revised structure
 **Screenshots:**
 
 ![](https://github.com/strayacode/RoseGB/blob/master/screenshots/pic1.png)
+
 **Test Pass Checklist:**
 
 **Blargg:**
