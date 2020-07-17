@@ -19,7 +19,8 @@ reformed gameboy emulator in golang with revised structure
 - [x] 09-op r,r .gb
 - [x] 10-bit ops.gb
 - [x] 11-op a, (hl).gb
-- [ ] cpu_instrs.gb
+- [x] cpu_instrs.gb
+- [ ] instr_timing.gb
 
 **tests:**
 - [x] boot_regs-dmgABC.gb
