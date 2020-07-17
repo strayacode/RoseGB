@@ -11,12 +11,7 @@ import (
 )
 
 var (
-	cartridgetypes = [28]string{
-		"ROM ONLY", "MBC1", "MBC1+RAM", "MBC1+RAM+BATTERY", "MBC2", "MBC2+BATTERY", "ROM+RAM", 
-		"ROM+RAM+BATTERY", "MMM01", "MMM01+RAM", "MMM01+RAM+BATTERY", "MBC3+TIMER+BATTERY", "MBC3+TIMER+RAM+BATTERY", "MBC3", 
-		"MBC3+RAM", "MBC3+RAM+BATTERY", "MBC5", "MBC5+RAM", "MBC5+RAM+BATTERY", "MBC5+RUMBLE", "MBC5+RUMBLE+RAM", 
-		"MBC5+RUMBLE+RAM+BATTERY", "MBC6", "MBC7+SENSOR+RUMBLE+RAM+BATTERY", "POCKET CAMERA", "BANDAI TAMA5", "HuC3", "HuC1+RAM+BATTERY",
-	}
+	
 	colours = [4][4]Colour{
 		{Colour{255, 255, 255, 255}, Colour{192, 192, 192, 255}, Colour{96, 96, 96, 255}, Colour{0, 0, 0, 255}},
 		{Colour{202, 220, 159, 255}, Colour{155, 188, 15, 255}, Colour{48, 98, 48, 255}, Colour{15, 56, 15, 255}},
@@ -31,7 +26,7 @@ var (
 	}
 	romsize = ""
 	upLeft = image.Point{0, 0}
-	lowRight = image.Point{160, 144}
+	lowRight = image.Point{320, 288}
 	texture *g.Texture
 	tileTexture *g.Texture
 	cycles = 70224
@@ -40,12 +35,13 @@ var (
 
 func main() {
 	// init cpu
-	cpu.init()
+	
 	if checkBootromSkip() {
 		cpu.skipBootROM()
 	} else {
 		cpu.bus.cartridge.loadBootROM()
 	}
+	cpu.init()
 	
 	switch cpu.bus.cartridge.header.ROMSize {
 	case 0x00:
@@ -106,47 +102,46 @@ func loop() {
 			),
 	}).Build()
 
-	g.Window("RoseGB", 10, 30, 180, 180, g.Layout{
+	g.Window("RoseGB", 10, 30, 380, 380, g.Layout{
 		g.Custom(func() {
 			canvas := g.GetCanvas()
 			pos := g.GetCursorScreenPos()
 			if texture != nil {
-				canvas.AddImage(texture, pos.Add(image.Pt(0, 0)), pos.Add(image.Pt(160, 144)))
+				canvas.AddImage(texture, pos.Add(image.Pt(0, 0)), pos.Add(image.Pt(320, 288)))
 			}
 		}),
 	})
-	g.Window("Debugger", 200, 30, 300, 400, g.Layout{
-		g.Label("A: 0x" + strconv.FormatUint(uint64(cpu.A), 16)),
-		g.Label("B: 0x" + strconv.FormatUint(uint64(cpu.B), 16)),
-		g.Label("C: 0x" + strconv.FormatUint(uint64(cpu.C), 16)),
-		g.Label("D: 0x" + strconv.FormatUint(uint64(cpu.D), 16)),
-		g.Label("E: 0x" + strconv.FormatUint(uint64(cpu.E), 16)),
-		g.Label("F: 0x" + strconv.FormatUint(uint64(cpu.F), 16)),
-		g.Label("H: 0x" + strconv.FormatUint(uint64(cpu.H), 16)),
-		g.Label("L: 0x" + strconv.FormatUint(uint64(cpu.L), 16)),
-		g.Label("LCDC: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDC), 16)),
-		g.Label("LCDCSTAT: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDCSTAT), 16)),
-		g.Label("Opcode: 0x" + strconv.FormatUint(uint64(cpu.Opcode), 16)),
-		g.Label("IME: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IME), 16) + " IF: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IF), 16) + " IE: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IE), 16)),
-		g.Label("DIV: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.DIV), 16) + " TIMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TIMA), 16) + " TMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TMA), 16) + " TAC: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TAC), 16)),
-		g.Label("halt: " + strconv.FormatBool(cpu.halt)),
-		g.Label("P1: " + strconv.FormatUint(uint64(cpu.bus.keypad.P1), 2)),
-		g.Label("Direction: " + strconv.FormatUint(uint64(cpu.bus.keypad.direction[3] << 3 | cpu.bus.keypad.direction[2] << 2 | cpu.bus.keypad.direction[1] << 1 | cpu.bus.keypad.direction[0]), 2)),
-		g.Label("Button: " + strconv.FormatUint(uint64(cpu.bus.keypad.button[3] << 3 | cpu.bus.keypad.button[2] << 2 | cpu.bus.keypad.button[1] << 1 | cpu.bus.keypad.button[0]), 2)),
-	})
+	// g.Window("Debugger", 200, 30, 300, 400, g.Layout{
+	// 	g.Label("A: 0x" + strconv.FormatUint(uint64(cpu.A), 16)),
+	// 	g.Label("B: 0x" + strconv.FormatUint(uint64(cpu.B), 16)),
+	// 	g.Label("C: 0x" + strconv.FormatUint(uint64(cpu.C), 16)),
+	// 	g.Label("D: 0x" + strconv.FormatUint(uint64(cpu.D), 16)),
+	// 	g.Label("E: 0x" + strconv.FormatUint(uint64(cpu.E), 16)),
+	// 	g.Label("F: 0x" + strconv.FormatUint(uint64(cpu.F), 16)),
+	// 	g.Label("H: 0x" + strconv.FormatUint(uint64(cpu.H), 16)),
+	// 	g.Label("L: 0x" + strconv.FormatUint(uint64(cpu.L), 16)),
+	// 	g.Label("LCDC: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDC), 16)),
+	// 	g.Label("LCDCSTAT: 0x" + strconv.FormatUint(uint64(cpu.bus.ppu.LCDCSTAT), 16)),
+	// 	g.Label("Opcode: 0x" + strconv.FormatUint(uint64(cpu.Opcode), 16)),
+	// 	g.Label("IME: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IME), 16) + " IF: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IF), 16) + " IE: 0x" + strconv.FormatUint(uint64(cpu.bus.interrupt.IE), 16)),
+	// 	g.Label("DIV: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.DIV), 16) + " TIMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TIMA), 16) + " TMA: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TMA), 16) + " TAC: 0x" + strconv.FormatUint(uint64(cpu.bus.timer.TAC), 16)),
+	// 	g.Label("halt: " + strconv.FormatBool(cpu.halt)),
+	// 	g.Label("P1: " + strconv.FormatUint(uint64(cpu.bus.keypad.P1), 2)),
+	// 	g.Label("Direction: " + strconv.FormatUint(uint64(cpu.bus.keypad.direction[3] << 3 | cpu.bus.keypad.direction[2] << 2 | cpu.bus.keypad.direction[1] << 1 | cpu.bus.keypad.direction[0]), 2)),
+	// 	g.Label("Button: " + strconv.FormatUint(uint64(cpu.bus.keypad.button[3] << 3 | cpu.bus.keypad.button[2] << 2 | cpu.bus.keypad.button[1] << 1 | cpu.bus.keypad.button[0]), 2)),
+	// })
 
-	g.Window("Tile Viewer", 510, 30, 200, 300, g.Layout{
-		g.Custom(func() {
-			canvas := g.GetCanvas()
-			pos := g.GetCursorScreenPos()
-			if texture != nil {
-				canvas.AddImage(tileTexture, pos.Add(image.Pt(0, 0)), pos.Add(image.Pt(128, 192)))
-			}
-		}),
-	})
+	// g.Window("Tile Viewer", 510, 30, 200, 300, g.Layout{
+	// 	g.Custom(func() {
+	// 		canvas := g.GetCanvas()
+	// 		pos := g.GetCursorScreenPos()
+	// 		if texture != nil {
+	// 			canvas.AddImage(tileTexture, pos.Add(image.Pt(0, 0)), pos.Add(image.Pt(128, 192)))
+	// 		}
+	// 	}),
+	// })
 	
 	g.Window("Cartridge", 720, 30, 250, 300, g.Layout{
-		g.Label("Cartridge Type: " + cartridgetypes[cpu.bus.cartridge.header.cartridgeType]),
 		g.Label("ROM Size: " + romsize),
 		g.Label("RAM Size: " + ramsize[cpu.bus.cartridge.header.RAMSize]),
 		g.Label("Banking Mode: " + strconv.Itoa(int(cpu.bus.bankingMode))),
@@ -181,10 +176,9 @@ func refresh() {
     			cpu.bus.timer.timerInterrupt = false
     		}
     	}
-    	cpu.drawTileViewer()
+    	// cpu.drawTileViewer()
     	cpu.drawFramebuffer()
     	cpu.checkInput()
-    	// fmt.Println(cpu.bus.ppu.OAM)
         g.Update()
         <-ticker.C
     } 
@@ -245,12 +239,15 @@ type Colour struct {
 func (cpu *CPU) drawFramebuffer() {
 	
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
-	for i := 0; i < 144; i++ {
-		for j := 0; j < 160; j++ {
+	for i := 0; i < 288; i += 2 {
+		for j := 0; j < 320; j += 2 {
 			// get palette
-			tileColour := cpu.bus.ppu.frameBuffer[i][j]
+			tileColour := cpu.bus.ppu.frameBuffer[i / 2][j / 2]
 			colour := color.RGBA{colours[paletteIndex][tileColour].R, colours[paletteIndex][tileColour].G, colours[paletteIndex][tileColour].B, colours[paletteIndex][tileColour].A}
 			img.Set(j, i, colour)
+			img.Set(j + 1, i, colour)
+			img.Set(j, i + 1, colour)
+			img.Set(j + 1, i + 1, colour)
 		}
 	}
 	texture, _ = g.NewTextureFromRgba(img)
@@ -369,7 +366,10 @@ func reset() { // still experimental
 }
 
 func (cpu *CPU) init() {
+	switch cpu.bus.cartridge.header.cartridgeType {
 
-	cpu.bus.cartridge.rombank.bankptr = 0x01
+	case 0, 1, 2, 3:
+		cpu.bus.cartridge.rombank.bankptr = 0x01
+	}
 }
 

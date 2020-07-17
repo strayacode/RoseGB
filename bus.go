@@ -32,15 +32,12 @@ func (bus *Bus) read(addr uint16) byte {
 	case addr >= 0x4000 && addr <= 0x7FFF:
 		return bus.cartridge.rombank.bank[bus.cartridge.rombank.bankptr][addr - 0x4000]
 	case addr >= 0x8000 && addr <= 0x9FFF:
-		if bus.ppu.cpuVRAMAccess == true {
-			return bus.ppu.VRAM[addr - 0x8000]
-		}
-		return 0
+		return bus.ppu.VRAM[addr - 0x8000]
 	case addr >= 0xA000 && addr <= 0xBFFF:
 		switch bus.cartridge.header.cartridgeType {
 		case 0:
 			return bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr - 0xA000]
-		case 1, 2, 3:
+		case 1, 2, 3, 0x11, 0x12, 0x13, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E:
 			if bus.enableERAM == true {
 				return bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr - 0xA000]
 			} else {
@@ -54,7 +51,9 @@ func (bus *Bus) read(addr uint16) byte {
 	case addr >= 0xE000 && addr <= 0xFDFF:
 		return bus.WRAM[addr - 0xE000]
 	case addr >= 0xFE00 && addr <= 0xFE9F:
-		return bus.ppu.OAM[addr - 0xFE00]
+		if bus.ppu.cpuOAMAccess {
+			return bus.ppu.OAM[addr - 0xFE00]
+		}
 	case addr >= 0xFF00 && addr <= 0xFF7F:
 		return bus.readIO(addr)
 	case addr >= 0xFF80 && addr <= 0xFFFE:
@@ -63,7 +62,6 @@ func (bus *Bus) read(addr uint16) byte {
 		return bus.interrupt.IE
 	default:
 		fmt.Println("DEBUG: non-readable memory location!", addr)
-		os.Exit(3)
 		return 0
 	}
 	return 0
@@ -97,7 +95,7 @@ func (bus *Bus) write(addr uint16, data byte) {
 	case addr >= 0x0000 && addr <= 0x1FFF:
 		// MBC1
 		switch bus.cartridge.header.cartridgeType {
-		case 1, 2, 3:
+		case 1, 2, 3, 0x11, 0x12, 0x13, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E:
 			if (data & 0xF) == 0xA {
 				bus.enableERAM = true
 			} else {
@@ -123,6 +121,26 @@ func (bus *Bus) write(addr uint16, data byte) {
 					bus.cartridge.rombank.bankptr = (uint16(data) & 0x1F)
 				}
 			}
+		case 0x11, 0x12, 0x13:
+			if data == 0x00 {
+				bus.cartridge.rombank.bankptr = 0x01
+			} else {
+				bus.cartridge.rombank.bankptr = uint16(data) & 0x7F
+			}
+		}
+	case addr >= 0x2000 && addr <= 0x2FFF:
+		// MBC1
+		switch bus.cartridge.header.cartridgeType {
+		
+		case 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E:
+			bus.cartridge.rombank.bankptr = (bus.cartridge.rombank.bankptr & 0x100) | uint16(data)
+		}
+	case addr >= 0x3000 && addr <= 0x3FFF:
+		// MBC1
+		switch bus.cartridge.header.cartridgeType {
+		
+		case 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E:
+			bus.cartridge.rombank.bankptr = (bus.cartridge.rombank.bankptr & 0xFF) | (uint16(data) << 8)
 		}
 	case addr >= 0x4000 && addr <= 0x5FFF:
 		// MBC1
@@ -132,6 +150,10 @@ func (bus *Bus) write(addr uint16, data byte) {
 				if bus.cartridge.header.RAMSize == 0x03 {
 					bus.cartridge.rambank.bankptr = (data & 0x03)
 				}
+			case 0x11, 0x12, 0x13:
+				bus.cartridge.rambank.bankptr = (data & 0x03)
+			case 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E:
+				bus.cartridge.rambank.bankptr = (data & 0xF)
 			default:
 
 		}
@@ -142,12 +164,13 @@ func (bus *Bus) write(addr uint16, data byte) {
 		}
 	case addr >= 0x8000 && addr <= 0x9FFF:
 		bus.ppu.VRAM[addr - 0x8000] = data
+
 	case addr >= 0xA000 && addr <= 0xBFFF:
 		// MBC1
 		switch bus.cartridge.header.cartridgeType {
 		case 0:
 			bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr - 0xA000] = data
-		case 1, 2, 3:
+		case 1, 2, 3, 0x11, 0x12, 0x13, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E:
 
 			if bus.enableERAM == true {
 				bus.cartridge.rambank.bank[bus.cartridge.rambank.bankptr][addr - 0xA000] = data
@@ -159,7 +182,9 @@ func (bus *Bus) write(addr uint16, data byte) {
 	case addr >= 0xE000 && addr <= 0xFDFF:
 		bus.WRAM[addr - 0xE000] = data
 	case addr >= 0xFE00 && addr <= 0xFE9F:
-		bus.ppu.OAM[addr - 0xFE00] = data
+		if bus.ppu.cpuOAMAccess {
+			bus.ppu.OAM[addr - 0xFE00] = data
+		}
 	case addr >= 0xFF00 && addr <= 0xFF7F:
 		bus.writeIO(addr, data)
 	case addr >= 0xFF80 && addr <= 0xFFFE:
@@ -246,6 +271,12 @@ func (bus *Bus) readIO(addr uint16) byte {
 		return bus.ppu.LYC
 	case 0xFF47:
 		return bus.ppu.BGP
+	case 0xFF48:
+		return bus.ppu.OBP0
+	case 0xFF49:
+		return bus.ppu.OBP1
+	case 0xFF4A:
+		return bus.ppu.WY
 	case 0xFF4B:
 		return bus.ppu.WX
 	case 0xFF4D:

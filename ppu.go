@@ -23,7 +23,6 @@ type PPU struct {
 	BGP byte
 	OBP0 byte
 	OBP1 byte
-	cpuVRAMAccess bool
 	cpuOAMAccess bool
 	DMA byte
 	visibleSprites [10]int
@@ -34,6 +33,7 @@ func (cpu *CPU) PPUTick() {
 	
 	switch cpu.bus.ppu.LCDCSTAT & 0x03 {
 		case 0:
+			cpu.bus.ppu.cpuOAMAccess = true
 			// HBlank
 			if cpu.bus.ppu.Cycles >= 204 {
 				cpu.bus.ppu.Cycles = 0
@@ -57,7 +57,7 @@ func (cpu *CPU) PPUTick() {
 				}
 			}
 		case 1:
-			
+			cpu.bus.ppu.cpuOAMAccess = true
 			// VBlank
 			if cpu.bus.ppu.Cycles % 456 == 0 {
 				cpu.bus.ppu.LY++
@@ -82,25 +82,24 @@ func (cpu *CPU) PPUTick() {
 				
 			} 
 		case 2: 
+			cpu.bus.ppu.cpuOAMAccess = false
 			// search oam for 10 sprites that can fit on the current line and place in an array
 			if cpu.bus.ppu.Cycles >= 80 {
 				cpu.bus.ppu.spriteSelect()
 				cpu.bus.ppu.Cycles = 0
 				// set to mode 3
 				cpu.bus.ppu.LCDCSTAT |= 0x03
-				cpu.bus.ppu.cpuVRAMAccess = false
 			}
 		case 3:
 			// read scanline from VRAM and put in framebuffer
-			
+			cpu.bus.ppu.cpuOAMAccess = false
 			if cpu.bus.ppu.Cycles >= 172 {
 				if (cpu.bus.ppu.LCDC & (1 << 7)) >> 7 == 1 {
-					cpu.bus.ppu.drawScanLine()
+					cpu.bus.ppu.drawScanline()
 				}
 				// set to hblank
 				cpu.bus.ppu.LCDCSTAT &= 0xFC
 				cpu.bus.ppu.Cycles = 0
-				cpu.bus.ppu.cpuVRAMAccess = true
 				cpu.bus.ppu.setHBlankInterrupt()
 				cpu.bus.interrupt.requestLCDCSTAT()
 
@@ -145,29 +144,47 @@ func (ppu *PPU) spriteSelect() {
 
 
 // trying to draw line by line
-func (ppu *PPU) drawScanLine() {
+func (ppu *PPU) drawScanline() {
 	
 	offsetY := math.Floor(float64(ppu.LY + ppu.SCY) / 8)
 	offsetX := math.Floor(float64(ppu.SCX + ppu.LX) / 8)
 	tileOffset := uint16((ppu.SCY + ppu.LY) % 8) * 2
 	startAddr := ppu.getBGMapAddr() + uint16(offsetY * 32) + uint16(offsetX)
+	windowStartAddr := ppu.getWindowMapAddr() + uint16(ppu.WY * 4) + uint16(ppu.WX)
 	
 	// iterate through tiles in a scanline
 	for i := 0; i < 20; i++ {
-		if ppu.getBGStartAddr() == 0x8000 {
-			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]) * 16) - 0x8000
-			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
-		} else {
-			tileNumber := ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]
-			
-			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]) * 16) - 0x8000 
-			
-			if tileNumber <= 127 {
-				start = (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]) * 16) - 0x8000	
-			} else if tileNumber >= 128 {
-				start = uint16(tileNumber) * 16
+		start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[(windowStartAddr + uint16(i) - 0x8000) & 0x1FFF]) * 16) - 0x8000
+		if ppu.LY >= ppu.WY && ppu.LX >= ppu.WX - 7 && ppu.windowEnable() {
+
+			tileOffset := uint16((ppu.LY) % 8) * 2
+			// fmt.Println(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+			if ppu.getBGStartAddr() == 0x8000 {
+				ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+			} else {
+				tileNumber := ppu.VRAM[(windowStartAddr + uint16(i) - 0x8000) & 0x1FFF]
+				if tileNumber <= 127 {
+					start = (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[(windowStartAddr + uint16(i) - 0x8000) & 0x1FFF]) * 16) - 0x8000	
+				} else if tileNumber >= 128 {
+					start = uint16(tileNumber) * 16
+				}
+				ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
 			}
-			ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+		} else {
+			start := (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]) * 16) - 0x8000
+			if ppu.getBGStartAddr() == 0x8000 {
+
+				
+				ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+			} else {
+				tileNumber := ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]
+				if tileNumber <= 127 {
+					start = (uint16(ppu.getBGStartAddr()) + uint16(ppu.VRAM[(startAddr + uint16(i) - 0x8000) & 0x1FFF]) * 16) - 0x8000	
+				} else if tileNumber >= 128 {
+					start = uint16(tileNumber) * 16
+				}
+				ppu.drawBGLine(ppu.VRAM[start + tileOffset], ppu.VRAM[start + tileOffset + 1])
+			}
 		}
 
 		// draw sprites now
@@ -232,6 +249,13 @@ func (ppu *PPU) getBGMapAddr() uint16 {
 	return 0x9800
 }
 
+func (ppu *PPU) getWindowMapAddr() uint16 {
+	if ppu.LCDC & 0x40 >> 6 == 1 {
+		return 0x9C00
+	}
+	return 0x9800
+}
+
 func (ppu *PPU) writeDump(data string) {
 	f, err := os.OpenFile("dump.txt", os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
@@ -269,6 +293,10 @@ func (ppu *PPU) dmaTransfer() {
 
 func (ppu *PPU) spritePalette(attr byte) byte {
 	return ((attr & 0x10) >> 4)
+}
+
+func (ppu *PPU) windowEnable() bool {
+	return (((ppu.LCDC & (1 << 5)) >> 5) == 1)
 }
 
 
