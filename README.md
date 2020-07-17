@@ -1,6 +1,8 @@
 # RoseGB
 reformed gameboy emulator in golang with revised structure
+**Screenshots:**
 
+![](pic1.png)
 **Test Pass Checklist:**
 
 **Blargg:**
