@@ -55,6 +55,7 @@ reformed gameboy emulator in golang with revised structure
 - [ ] be able to easily change the size of the game window
 - [ ] pixel fifo
 - [ ] full restructure of emulator for optimization
+- [ ] audio
 
 **Usage:**
 
