@@ -53,6 +53,8 @@ reformed gameboy emulator in golang with revised structure
 - [ ] play/pause/step functionality
 - [ ] add emulator window that can be "popped out" of the main window to play the emulator on any screen
 - [ ] be able to easily change the size of the game window
+- [ ] pixel fifo
+- [ ] full restructure of emulator for optimization
 
 **Usage:**
 
